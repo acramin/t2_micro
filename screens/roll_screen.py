@@ -217,7 +217,6 @@ class RollScreen(Screen):
         self.dice_animation = None
         self.roll_callback = None
         self.weapon_data = None  # Store weapon data for damage rolls
-        self.target_ac = 15  # Default AC for attack rolls
         
     def on_enter(self):
         """Called when the screen is displayed"""
@@ -255,7 +254,7 @@ class RollScreen(Screen):
         if self.ids.get('attack_result_container'):
             self.ids.attack_result_container.clear_widgets()
 
-    def setup_roll(self, roll_type, dice_type=20, modifier=0, description="", callback=None, weapon_data=None, target_ac=15):
+    def setup_roll(self, roll_type, dice_type=20, modifier=0, description="", callback=None, weapon_data=None):
         """Set up the roll parameters"""
         self.roll_type = roll_type
         self.dice_type = dice_type
@@ -263,7 +262,6 @@ class RollScreen(Screen):
         self.roll_description = description
         self.roll_callback = callback
         self.weapon_data = weapon_data
-        self.target_ac = target_ac
         self.critical_hit = False
         self.critical_fail = False
         self.show_attack_result = False
@@ -390,64 +388,37 @@ class RollScreen(Screen):
             self.ids.result_label.text = result_text
     
     def handle_attack_result(self):
-        """Handle the result of an attack roll"""
-        # Determine if attack hits (critical hit always hits, critical fail always misses)
-        if self.critical_hit:
-            self.attack_success = True
-            hit_text = "CRITICAL HIT! Attack succeeds!"
-        elif self.critical_fail:
-            self.attack_success = False
-            hit_text = "CRITICAL MISS! Attack fails!"
-        else:
-            self.attack_success = self.total >= self.target_ac
-            if self.attack_success:
-                hit_text = f"HIT! (AC {self.target_ac})"
-            else:
-                hit_text = f"MISS! (AC {self.target_ac})"
-        
+        """Handle the result of an attack roll - let user decide hit/miss"""
+        # Show the result and let the user decide if it hit or missed
         self.show_attack_result = True
         
-        # Add attack result display - only if container is empty
+        # Add simple message prompting user to decide
         if self.ids.get('attack_result_container'):
             container = self.ids.attack_result_container
             if not container.children:  # Only add if empty
                 
-                result_layout = BoxLayout(orientation='vertical', spacing=10)
-                
-                # Hit/miss label
-                hit_label = Label(
-                    text=hit_text,
-                    color=(0.2, 0.8, 0.2, 1) if self.attack_success else (0.8, 0.2, 0.2, 1),
+                # Prompt user to decide hit or miss
+                prompt_label = Label(
+                    text="Did the attack hit or miss?",
+                    color=(0.925, 0.941, 0.945, 1),  # Light color
                     font_size=18,
                     bold=True,
-                    size_hint_y=None,
-                    height=40
+                    halign="center",
+                    valign="middle"
                 )
-                result_layout.add_widget(hit_label)
-                
-                # Buttons
-                button_layout = BoxLayout(spacing=10, size_hint_y=None, height=60)
-                
-                if self.attack_success:
-                    # Attack hit - offer damage roll
-                    damage_btn = PrimaryButton(
-                        text="Roll Damage",
-                        size_hint_x=0.5
-                    )
-                    damage_btn.bind(on_press=self.roll_damage)
-                    button_layout.add_widget(damage_btn)
-                
-                # Always offer to go back to main
-                main_btn = PrimaryButton(
-                    text="Back to Main",
-                    size_hint_x=0.5,
-                    bg_color=[0.6, 0.6, 0.6, 1] if self.attack_success else [0.541, 0.169, 0.886, 1]
-                )
-                main_btn.bind(on_press=lambda x: self.back_to_main())
-                button_layout.add_widget(main_btn)
-                
-                result_layout.add_widget(button_layout)
-                container.add_widget(result_layout)
+                container.add_widget(prompt_label)
+    
+    def confirm_hit(self):
+        """User confirms the attack hit - proceed to damage roll"""
+        if self.weapon_data:
+            self.roll_damage(None)
+        else:
+            # Fallback if no weapon data
+            self.back_to_main()
+    
+    def confirm_miss(self):
+        """User confirms the attack missed - return to main"""
+        self.back_to_main()
     
     def handle_damage_result(self):
         """Handle the result of a damage roll"""
@@ -685,8 +656,7 @@ class RollManager:
             dice_type=20,
             modifier=modifier,
             description=f"Attack with {weapon.get('name', 'Weapon')}",
-            weapon_data=weapon,
-            target_ac=15  # Default AC
+            weapon_data=weapon
         )
         
         self.app.screen_manager.current = 'roll'

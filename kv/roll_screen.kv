@@ -26,7 +26,7 @@
                 font_size: 18
                 bold: True
                 text_size: self.size
-                halign: "center"  # Changed from "left" to "center" since no back button
+                halign: "center"  # Centered since no back button
                 valign: "middle"
         
         # Animation container (bigger, centered in upper area)
@@ -93,7 +93,7 @@
             spacing: 15
             padding: [15, 5, 15, 5]
         
-        # Action buttons (Roll Again and New Roll buttons at bottom)
+        # Action buttons (positioned at bottom)
         BoxLayout:
             size_hint: (1, None)
             height: 60
@@ -106,7 +106,6 @@
                 size_hint_x: 0.5
                 height: 55
                 on_press: root.new_roll()
-                opacity: 1 if not root.show_attack_result else 0
             
             PrimaryButton:
                 text: "New Roll"
@@ -114,4 +113,3 @@
                 height: 55
                 bg_color: [0.2, 0.6, 0.8, 1]  # Different color
                 on_press: root.back_to_main()
-                opacity: 1 if not root.show_attack_result else 0
