@@ -40,7 +40,7 @@ class DiceAnimation(Widget):
             
             # Center the dice
             center_x = self.x + self.width / 2
-            center_y = self.y + self.height / 2
+            center_y = self.y + self.height / 2 + 40 
             
             # Apply rotation
             Rotate(angle=self.rotation, origin=(center_x, center_y))
@@ -184,14 +184,17 @@ class DiceAnimation(Widget):
         """Stop the rolling animation and get final result"""
         if self.animation_event:
             self.animation_event.cancel()
+            self.animation_event = None
         
         self.rolling = False
         # Final roll
         final_result = random.randint(1, self.dice_type)
         self.current_value = final_result
         
-        # Stop rotation at a nice angle
-        self.rotation = 0
+        # Stop rotation smoothly
+        stop_anim = Animation(rotation=0, duration=0.3)
+        stop_anim.start(self)
+        
         return final_result
 
 class RollScreen(Screen):
@@ -233,13 +236,8 @@ class RollScreen(Screen):
         if self.ids.get('result_label'):
             self.ids.result_label.text = "Preparing roll..."
         
-        # Clear any existing content
-        if self.ids.get('animation_container'):
-            self.ids.animation_container.clear_widgets()
-        if self.ids.get('followup_container'):
-            self.ids.followup_container.clear_widgets()
-        if self.ids.get('attack_result_container'):
-            self.ids.attack_result_container.clear_widgets()
+        # Clear any existing content only once at start
+        self.clear_all_containers()
         
         # Cancel any existing update events
         if hasattr(self, 'update_event'):
@@ -247,6 +245,15 @@ class RollScreen(Screen):
         
         # Start the roll animation with a small delay to ensure layout is ready
         Clock.schedule_once(lambda dt: self.start_roll(), 0.2)
+    
+    def clear_all_containers(self):
+        """Clear all dynamic containers once"""
+        if self.ids.get('animation_container'):
+            self.ids.animation_container.clear_widgets()
+        if self.ids.get('followup_container'):
+            self.ids.followup_container.clear_widgets()
+        if self.ids.get('attack_result_container'):
+            self.ids.attack_result_container.clear_widgets()
 
     def setup_roll(self, roll_type, dice_type=20, modifier=0, description="", callback=None, weapon_data=None, target_ac=15):
         """Set up the roll parameters"""
@@ -265,21 +272,20 @@ class RollScreen(Screen):
     def start_roll(self):
         """Start the dice roll animation"""
         if self.ids.get('animation_container') and self.roll_type != "damage":
-            # Clear any existing animation and text
-            self.ids.animation_container.clear_widgets()
+            # Only clear if there's existing content
+            container = self.ids.animation_container
+            if container.children:
+                container.clear_widgets()
             
             # Update result label to show rolling state
             if self.ids.get('result_label'):
                 self.ids.result_label.text = "Rolling..."
             
-            # Get container dimensions first
-            container = self.ids.animation_container
-            
-            # Create the dice animation with proper initial positioning
+            # Create the dice animation with bigger size for the larger container
             self.dice_animation = DiceAnimation(
                 dice_type=self.dice_type,
                 size_hint=(None, None),
-                size=(140, 140)
+                size=(180, 180)  # Increased from (140, 140) to (180, 180)
             )
             
             # Calculate center position before adding to container
@@ -292,16 +298,16 @@ class RollScreen(Screen):
                     # Add the dice to container
                     container.add_widget(self.dice_animation)
                     
-                    # Create text label positioned below dice
+                    # Create text label positioned below dice (bigger)
                     self.current_value_label = Label(
                         text=str(self.dice_animation.current_value),
-                        font_size=24,
+                        font_size=32,  # Increased from 24 to 32
                         bold=True,
                         color=(1, 1, 0.8, 1),  # Light yellow
                         size_hint=(None, None),
-                        size=(80, 30),
+                        size=(100, 40),  # Increased from (80, 30) to (100, 40)
                         center_x=container.center_x,
-                        y=self.dice_animation.y - 60
+                        y=self.dice_animation.y - 40  # Increased offset from -60 to -80
                     )
                     container.add_widget(self.current_value_label)
                     
@@ -401,72 +407,74 @@ class RollScreen(Screen):
         
         self.show_attack_result = True
         
-        # Add attack result display
+        # Add attack result display - only if container is empty
         if self.ids.get('attack_result_container'):
-            self.ids.attack_result_container.clear_widgets()
-            
-            result_layout = BoxLayout(orientation='vertical', spacing=10)
-            
-            # Hit/miss label
-            hit_label = Label(
-                text=hit_text,
-                color=(0.2, 0.8, 0.2, 1) if self.attack_success else (0.8, 0.2, 0.2, 1),
-                font_size=18,
-                bold=True,
-                size_hint_y=None,
-                height=40
-            )
-            result_layout.add_widget(hit_label)
-            
-            # Buttons
-            button_layout = BoxLayout(spacing=10, size_hint_y=None, height=60)
-            
-            if self.attack_success:
-                # Attack hit - offer damage roll
-                damage_btn = PrimaryButton(
-                    text="Roll Damage",
-                    size_hint_x=0.5
+            container = self.ids.attack_result_container
+            if not container.children:  # Only add if empty
+                
+                result_layout = BoxLayout(orientation='vertical', spacing=10)
+                
+                # Hit/miss label
+                hit_label = Label(
+                    text=hit_text,
+                    color=(0.2, 0.8, 0.2, 1) if self.attack_success else (0.8, 0.2, 0.2, 1),
+                    font_size=18,
+                    bold=True,
+                    size_hint_y=None,
+                    height=40
                 )
-                damage_btn.bind(on_press=self.roll_damage)
-                button_layout.add_widget(damage_btn)
-            
-            # Always offer to go back to main
-            main_btn = PrimaryButton(
-                text="Back to Main",
-                size_hint_x=0.5,
-                bg_color=[0.6, 0.6, 0.6, 1] if self.attack_success else [0.541, 0.169, 0.886, 1]
-            )
-            main_btn.bind(on_press=lambda x: self.back_to_main())
-            button_layout.add_widget(main_btn)
-            
-            result_layout.add_widget(button_layout)
-            self.ids.attack_result_container.add_widget(result_layout)
+                result_layout.add_widget(hit_label)
+                
+                # Buttons
+                button_layout = BoxLayout(spacing=10, size_hint_y=None, height=60)
+                
+                if self.attack_success:
+                    # Attack hit - offer damage roll
+                    damage_btn = PrimaryButton(
+                        text="Roll Damage",
+                        size_hint_x=0.5
+                    )
+                    damage_btn.bind(on_press=self.roll_damage)
+                    button_layout.add_widget(damage_btn)
+                
+                # Always offer to go back to main
+                main_btn = PrimaryButton(
+                    text="Back to Main",
+                    size_hint_x=0.5,
+                    bg_color=[0.6, 0.6, 0.6, 1] if self.attack_success else [0.541, 0.169, 0.886, 1]
+                )
+                main_btn.bind(on_press=lambda x: self.back_to_main())
+                button_layout.add_widget(main_btn)
+                
+                result_layout.add_widget(button_layout)
+                container.add_widget(result_layout)
     
     def handle_damage_result(self):
         """Handle the result of a damage roll"""
-        # Show damage-specific buttons
+        # Show damage-specific buttons - only if container is empty
         if self.ids.get('followup_container'):
-            self.ids.followup_container.clear_widgets()
-            
-            button_layout = BoxLayout(spacing=20, size_hint_y=None, height=60)
-            
-            # Roll damage again
-            reroll_btn = PrimaryButton(
-                text="Roll Again",
-                size_hint_x=0.5
-            )
-            reroll_btn.bind(on_press=lambda x: self.roll_damage(None))
-            button_layout.add_widget(reroll_btn)
-            
-            # Back to main
-            main_btn = PrimaryButton(
-                text="Back to Main",
-                size_hint_x=0.5
-            )
-            main_btn.bind(on_press=lambda x: self.back_to_main())
-            button_layout.add_widget(main_btn)
-            
-            self.ids.followup_container.add_widget(button_layout)
+            container = self.ids.followup_container
+            if not container.children:  # Only add if empty
+                
+                button_layout = BoxLayout(spacing=20, size_hint_y=None, height=60)
+                
+                # Roll damage again
+                reroll_btn = PrimaryButton(
+                    text="Roll Again",
+                    size_hint_x=0.5
+                )
+                reroll_btn.bind(on_press=lambda x: self.roll_damage(None))
+                button_layout.add_widget(reroll_btn)
+                
+                # Back to main
+                main_btn = PrimaryButton(
+                    text="Back to Main",
+                    size_hint_x=0.5
+                )
+                main_btn.bind(on_press=lambda x: self.back_to_main())
+                button_layout.add_widget(main_btn)
+                
+                container.add_widget(button_layout)
     
     def roll_damage(self, instance):
         """Roll damage for an attack"""
@@ -533,13 +541,8 @@ class RollScreen(Screen):
         if self.ids.get('result_label'):
             self.ids.result_label.text = "Preparing roll..."
         
-        # Clear containers
-        if self.ids.get('animation_container'):
-            self.ids.animation_container.clear_widgets()
-        if self.ids.get('followup_container'):
-            self.ids.followup_container.clear_widgets()
-        if self.ids.get('attack_result_container'):
-            self.ids.attack_result_container.clear_widgets()
+        # Clear containers only once
+        self.clear_all_containers()
         
         # Restart the roll with a small delay
         Clock.schedule_once(lambda dt: self.start_roll(), 0.2)
