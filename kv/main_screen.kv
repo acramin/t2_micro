@@ -1,0 +1,105 @@
+#:kivy 2.2.1
+#:import utils utils.calculations
+
+<MainScreen>:
+    name: "main"
+    
+    BoxLayout:
+        orientation: "vertical"
+        padding: 24
+        spacing: 16
+        size_hint_y: None
+        height: self.minimum_height
+        pos_hint: {'center_y': 0.5}
+        
+        # Header with profile info
+        BoxLayout:
+            size_hint_y: None
+            height: 56
+            spacing: 16
+            
+            Label:
+                text: "Current Character: " + root.current_character
+                color: 0.925, 0.941, 0.945, 1  # #ECF0F1
+                size_hint_x: 0.7
+                font_size: 20
+                bold: True
+                text_size: self.size
+                halign: "left"
+                valign: "middle"
+            
+            PrimaryButton:
+                text: "Change"
+                size_hint_x: 0.3
+                on_press: app.screen_manager.current = "profiles"
+        
+        # Primary action buttons
+        GridLayout:
+            cols: 3
+            rows: 1
+            spacing: 16
+            size_hint_y: None
+            height: 48
+            
+            PrimaryButton:
+                text: "Attack"
+                on_press: root.initiate_attack_roll()
+            
+            PrimaryButton:
+                text: "Saving Throw"
+                on_press: root.initiate_saving_throw()
+            
+            PrimaryButton:
+                text: "Ability Check"
+                on_press: root.initiate_ability_check()
+        
+        # Dice buttons
+        GridLayout:
+            cols: 4
+            rows: 2
+            spacing: 16
+            size_hint_y: None
+            height: 128
+            
+            DiceButton:
+                dice_type: 4
+                text: "d4"
+                on_press: root.roll_dice(4)
+            
+            DiceButton:
+                dice_type: 6
+                text: "d6"
+                on_press: root.roll_dice(6)
+            
+            DiceButton:
+                dice_type: 8
+                text: "d8"
+                on_press: root.roll_dice(8)
+            
+            DiceButton:
+                dice_type: 10
+                text: "d10"
+                on_press: root.roll_dice(10)
+            
+            DiceButton:
+                dice_type: 12
+                text: "d12"
+                on_press: root.roll_dice(12)
+            
+            DiceButton:
+                dice_type: 20
+                text: "d20"
+                on_press: root.roll_dice(20)
+            
+            DiceButton:
+                dice_type: 100
+                text: "d100"
+                on_press: root.roll_dice(100)
+            
+            Button:
+                text: "Custom"
+                background_color: 0.44, 0.50, 0.56, 1  # #7F8C8D
+                color: 1, 1, 1, 1
+                size_hint: (None, None)
+                size: 56, 56
+                on_press: root.show_custom_dice_dialog()

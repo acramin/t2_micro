@@ -1,0 +1,434 @@
+#:kivy 2.2.1
+#:import utils utils.calculations
+
+<AbilityInput>:
+    orientation: "horizontal"
+    size_hint_y: None
+    height: 40
+    spacing: 8
+    
+    Label:
+        text: root.ability_name
+        size_hint_x: 0.25
+        color: 0.925, 0.941, 0.945, 1  # Light gray text
+        bold: True
+    
+    Button:
+        text: "-"
+        size_hint_x: 0.08
+        background_color: 0.906, 0.298, 0.235, 1  # Red color
+        on_press: root.decrease_value()
+    
+    TextInput:
+        id: ability_value_input
+        text: str(root.ability_value)
+        size_hint_x: 0.15
+        input_filter: "int"
+        multiline: False
+        on_text: root.update_value(self.text)
+    
+    Button:
+        text: "+"
+        size_hint_x: 0.08
+        background_color: 0.133, 0.545, 0.133, 1  # Green color
+        on_press: root.increase_value()
+    
+    Label:
+        text: f"Modifier: {root.ability_modifier:+d}"
+        size_hint_x: 0.44
+        color: 0.925, 0.941, 0.945, 1  # Light gray text
+
+<SkillCheckbox>:
+    orientation: "horizontal"
+    size_hint_y: None
+    height: 30
+    spacing: 8
+    
+    CheckBox:
+        active: root.is_proficient
+        size_hint_x: 0.2
+        on_active: root.is_proficient = self.active
+    
+    Label:
+        text: root.skill_name
+        size_hint_x: 0.6
+        color: 0.925, 0.941, 0.945, 1  # Light gray text
+    
+    Label:
+        text: f"({root.ability})"
+        size_hint_x: 0.2
+        color: 0.44, 0.50, 0.56, 1
+        font_size: 12
+
+<WeaponInput>:
+    orientation: "vertical"
+    size_hint_y: None
+    height: 100
+    spacing: 8
+    padding: 8
+    
+    BoxLayout:
+        orientation: "horizontal"
+        size_hint_y: None
+        height: 40
+        spacing: 8
+        
+        TextInput:
+            text: root.weapon_name
+            hint_text: "Weapon Name"
+            size_hint_x: 0.4
+            multiline: False
+            on_text: root.weapon_name = self.text
+        
+        Spinner:
+            text: root.weapon_ability
+            values: ["STR", "DEX", "CON", "INT", "WIS", "CHA"]
+            size_hint_x: 0.2
+            on_text: root.weapon_ability = self.text
+        
+        Spinner:
+            text: root.weapon_damage_dice
+            values: ["d4", "d6", "d8", "d10", "d12", "d20", "2d6", "2d4"]
+            size_hint_x: 0.2
+            on_text: root.weapon_damage_dice = self.text
+        
+        TextInput:
+            text: str(root.weapon_damage_bonus)
+            hint_text: "Bonus"
+            size_hint_x: 0.1
+            input_filter: "int"
+            multiline: False
+            on_text: 
+                try: root.weapon_damage_bonus = int(self.text) if self.text else 0
+                except: pass
+        
+        CheckBox:
+            active: root.weapon_proficient
+            size_hint_x: 0.1
+            on_active: root.weapon_proficient = self.active
+        
+        Button:
+            text: "X"
+            size_hint_x: 0.1
+            background_color: 0.906, 0.298, 0.235, 1
+            on_press: app.root.get_screen('profile_editor').remove_weapon_input(root)
+
+<ProfileEditorScreen>:
+    name: "profile_editor"
+    
+    ScrollView:
+        do_scroll_x: False
+        do_scroll_y: True
+        
+        BoxLayout:
+            orientation: "vertical"
+            size_hint_y: None
+            height: self.minimum_height
+            padding: 24
+            spacing: 16
+            
+            # Header
+            BoxLayout:
+                size_hint_y: None
+                height: 56
+                spacing: 16
+                
+                Label:
+                    text: "Edit Character"
+                    color: 0.925, 0.941, 0.945, 1
+                    size_hint_x: 0.7
+                    font_size: 24
+                    bold: True
+                    text_size: self.size
+                    halign: "left"
+                    valign: "middle"
+                
+                PrimaryButton:
+                    text: "Back"
+                    size_hint_x: 0.15
+                    on_press: root.back_to_profiles()
+                
+                PrimaryButton:
+                    text: "Save"
+                    size_hint_x: 0.15
+                    on_press: root.save_profile()
+            
+            # Basic Info
+            BoxLayout:
+                orientation: "horizontal"
+                size_hint_y: None
+                height: 40
+                spacing: 16
+                
+                Label:
+                    text: "Character Name:"
+                    size_hint_x: 0.3
+                    color: 0.925, 0.941, 0.945, 1  # Light gray text
+                    bold: True
+                
+                TextInput:
+                    id: character_name
+                    text: ""
+                    size_hint_x: 0.4
+                    multiline: False
+                
+                Label:
+                    text: "Level:"
+                    size_hint_x: 0.1
+                    color: 0.925, 0.941, 0.945, 1  # Light gray text
+                    bold: True
+                
+                TextInput:
+                    id: character_level
+                    text: "1"
+                    size_hint_x: 0.2
+                    input_filter: "int"
+                    multiline: False
+            
+            # Ability Scores
+            Label:
+                text: "Ability Scores"
+                size_hint_y: None
+                height: 30
+                color: 0.925, 0.941, 0.945, 1  # Light gray text
+                font_size: 20
+                bold: True
+            
+            GridLayout:
+                cols: 2
+                size_hint_y: None
+                height: 120
+                spacing: 8
+                
+                AbilityInput:
+                    id: ability_str
+                    ability_name: "Strength"
+                    ability_value: 10
+                
+                AbilityInput:
+                    id: ability_dex
+                    ability_name: "Dexterity"
+                    ability_value: 10
+                
+                AbilityInput:
+                    id: ability_con
+                    ability_name: "Constitution"
+                    ability_value: 10
+                
+                AbilityInput:
+                    id: ability_int
+                    ability_name: "Intelligence"
+                    ability_value: 10
+                
+                AbilityInput:
+                    id: ability_wis
+                    ability_name: "Wisdom"
+                    ability_value: 10
+                
+                AbilityInput:
+                    id: ability_cha
+                    ability_name: "Charisma"
+                    ability_value: 10
+            
+            # Spacer between abilities and saving throws
+            Widget:
+                size_hint_y: None
+                height: 24
+            
+            # Saving Throw Proficiencies
+            Label:
+                text: "Saving Throw Proficiencies"
+                size_hint_y: None
+                height: 30
+                color: 0.925, 0.941, 0.945, 1  # Light gray text
+                font_size: 20
+                bold: True
+            
+            GridLayout:
+                cols: 3
+                size_hint_y: None
+                height: 60
+                spacing: 8
+                
+                BoxLayout:
+                    orientation: "horizontal"
+                    CheckBox:
+                        id: save_str
+                    Label:
+                        text: "Strength"
+                
+                BoxLayout:
+                    orientation: "horizontal"
+                    CheckBox:
+                        id: save_dex
+                    Label:
+                        text: "Dexterity"
+                
+                BoxLayout:
+                    orientation: "horizontal"
+                    CheckBox:
+                        id: save_con
+                    Label:
+                        text: "Constitution"
+                
+                BoxLayout:
+                    orientation: "horizontal"
+                    CheckBox:
+                        id: save_int
+                    Label:
+                        text: "Intelligence"
+                
+                BoxLayout:
+                    orientation: "horizontal"
+                    CheckBox:
+                        id: save_wis
+                    Label:
+                        text: "Wisdom"
+                
+                BoxLayout:
+                    orientation: "horizontal"
+                    CheckBox:
+                        id: save_cha
+                    Label:
+                        text: "Charisma"
+            
+            # Spacer between saving throws and skills
+            Widget:
+                size_hint_y: None
+                height: 24
+            
+            # Skill Proficiencies
+            Label:
+                text: "Skill Proficiencies"
+                size_hint_y: None
+                height: 30
+                color: 0.925, 0.941, 0.945, 1  # Light gray text
+                font_size: 20
+                bold: True
+            
+            GridLayout:
+                cols: 2
+                size_hint_y: None
+                height: self.minimum_height
+                spacing: 8
+                
+                SkillCheckbox:
+                    id: skill_acrobatics
+                    skill_name: "Acrobatics"
+                    ability: "DEX"
+                
+                SkillCheckbox:
+                    id: skill_animal_handling
+                    skill_name: "Animal Handling"
+                    ability: "WIS"
+                
+                SkillCheckbox:
+                    id: skill_arcana
+                    skill_name: "Arcana"
+                    ability: "INT"
+                
+                SkillCheckbox:
+                    id: skill_athletics
+                    skill_name: "Athletics"
+                    ability: "STR"
+                
+                SkillCheckbox:
+                    id: skill_deception
+                    skill_name: "Deception"
+                    ability: "CHA"
+                
+                SkillCheckbox:
+                    id: skill_history
+                    skill_name: "History"
+                    ability: "INT"
+                
+                SkillCheckbox:
+                    id: skill_insight
+                    skill_name: "Insight"
+                    ability: "WIS"
+                
+                SkillCheckbox:
+                    id: skill_intimidation
+                    skill_name: "Intimidation"
+                    ability: "CHA"
+                
+                SkillCheckbox:
+                    id: skill_investigation
+                    skill_name: "Investigation"
+                    ability: "INT"
+                
+                SkillCheckbox:
+                    id: skill_medicine
+                    skill_name: "Medicine"
+                    ability: "WIS"
+                
+                SkillCheckbox:
+                    id: skill_nature
+                    skill_name: "Nature"
+                    ability: "INT"
+                
+                SkillCheckbox:
+                    id: skill_perception
+                    skill_name: "Perception"
+                    ability: "WIS"
+                
+                SkillCheckbox:
+                    id: skill_performance
+                    skill_name: "Performance"
+                    ability: "CHA"
+                
+                SkillCheckbox:
+                    id: skill_persuasion
+                    skill_name: "Persuasion"
+                    ability: "CHA"
+                
+                SkillCheckbox:
+                    id: skill_religion
+                    skill_name: "Religion"
+                    ability: "INT"
+                
+                SkillCheckbox:
+                    id: skill_sleight_of_hand
+                    skill_name: "Sleight of Hand"
+                    ability: "DEX"
+                
+                SkillCheckbox:
+                    id: skill_stealth
+                    skill_name: "Stealth"
+                    ability: "DEX"
+                
+                SkillCheckbox:
+                    id: skill_survival
+                    skill_name: "Survival"
+                    ability: "WIS"
+            
+            # Spacer between skills and weapons
+            Widget:
+                size_hint_y: None
+                height: 24
+            
+            # Weapons
+            BoxLayout:
+                orientation: "horizontal"
+                size_hint_y: None
+                height: 40
+                spacing: 16
+                
+                Label:
+                    text: "Weapons"
+                    size_hint_x: 0.7
+                    color: 0.925, 0.941, 0.945, 1  # Light gray text
+                    font_size: 20
+                    bold: True
+                
+                PrimaryButton:
+                    text: "Add Weapon"
+                    size_hint_x: 0.3
+                    on_press: root.add_weapon_input()
+            
+            BoxLayout:
+                id: weapons_container
+                orientation: "vertical"
+                size_hint_y: None
+                height: self.minimum_height
+                spacing: 8
