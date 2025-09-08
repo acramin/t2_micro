@@ -1,0 +1,752 @@
+# screens/roll_screen.py
+from kivy.uix.screenmanager import Screen
+from kivy.properties import StringProperty, NumericProperty, ListProperty, ObjectProperty, BooleanProperty
+from kivy.animation import Animation
+from kivy.clock import Clock
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.label import Label
+from kivy.uix.image import Image
+from kivy.uix.widget import Widget
+from kivy.graphics import Color, Ellipse, PushMatrix, PopMatrix, Rotate
+from components.buttons import PrimaryButton
+from utils.calculations import calculate_modifier, calculate_proficiency_bonus
+import random
+import os
+import math
+
+class DiceAnimation(Widget):
+    """Widget for displaying dice rolling animation with placeholder graphics"""
+    dice_type = NumericProperty(20)
+    current_value = NumericProperty(1)
+    rotation = NumericProperty(0)
+    scale = NumericProperty(1)
+    
+    def __init__(self, dice_type, **kwargs):
+        super().__init__(**kwargs)
+        self.dice_type = dice_type
+        self.current_value = 1
+        self.animation_event = None
+        self.rolling = False
+        self.bind(pos=self.update_graphics, size=self.update_graphics)
+        self.bind(current_value=self.update_graphics)
+        self.bind(rotation=self.update_graphics)
+        self.bind(scale=self.update_graphics)
+        
+    def update_graphics(self, *args):
+        """Update the dice graphics"""
+        self.canvas.clear()
+        with self.canvas:
+            PushMatrix()
+            
+            # Center the dice
+            center_x = self.x + self.width / 2
+            center_y = self.y + self.height / 2
+            
+            # Apply rotation
+            Rotate(angle=self.rotation, origin=(center_x, center_y))
+            
+            # Scale
+            size = min(self.width, self.height) * self.scale * 0.8
+            
+            # Draw dice based on type
+            if self.dice_type == 4:
+                self.draw_d4(center_x, center_y, size)
+            elif self.dice_type == 6:
+                self.draw_d6(center_x, center_y, size)
+            elif self.dice_type == 8:
+                self.draw_d8(center_x, center_y, size)
+            elif self.dice_type == 10:
+                self.draw_d10(center_x, center_y, size)
+            elif self.dice_type == 12:
+                self.draw_d12(center_x, center_y, size)
+            elif self.dice_type == 20:
+                self.draw_d20(center_x, center_y, size)
+            elif self.dice_type == 100:
+                self.draw_d100(center_x, center_y, size)
+            else:
+                self.draw_generic_dice(center_x, center_y, size)
+                
+            PopMatrix()
+    
+    def draw_d6(self, x, y, size):
+        """Draw a d6 (cube)"""
+        Color(0.8, 0.8, 0.8, 1)  # Light gray
+        half_size = size / 2
+        # Simple square representation
+        from kivy.graphics import Rectangle
+        Rectangle(pos=(x - half_size, y - half_size), size=(size, size))
+        
+        # Draw the number
+        Color(0, 0, 0, 1)  # Black text
+        self.draw_number(x, y, self.current_value)
+    
+    def draw_d20(self, x, y, size):
+        """Draw a d20 (icosahedron)"""
+        Color(0.2, 0.6, 0.9, 1)  # Blue
+        # Draw as circle for simplicity
+        Ellipse(pos=(x - size/2, y - size/2), size=(size, size))
+        
+        # Draw the number
+        Color(1, 1, 1, 1)  # White text
+        self.draw_number(x, y, self.current_value)
+    
+    def draw_d4(self, x, y, size):
+        """Draw a d4 (tetrahedron)"""
+        Color(0.9, 0.2, 0.2, 1)  # Red
+        # Draw as triangle
+        from kivy.graphics import Triangle
+        half_size = size / 2
+        Triangle(points=[x, y + half_size, x - half_size, y - half_size, x + half_size, y - half_size])
+        
+        Color(1, 1, 1, 1)
+        self.draw_number(x, y, self.current_value)
+    
+    def draw_d8(self, x, y, size):
+        """Draw a d8 (octahedron)"""
+        Color(0.2, 0.9, 0.2, 1)  # Green
+        # Draw as diamond
+        from kivy.graphics import Quad
+        half_size = size / 2
+        Quad(points=[x, y + half_size, x - half_size, y, x, y - half_size, x + half_size, y])
+        
+        Color(0, 0, 0, 1)
+        self.draw_number(x, y, self.current_value)
+    
+    def draw_d10(self, x, y, size):
+        """Draw a d10"""
+        Color(0.9, 0.6, 0.2, 1)  # Orange
+        # Draw as pentagon-like shape
+        Ellipse(pos=(x - size/2, y - size/2), size=(size, size))
+        
+        Color(0, 0, 0, 1)
+        self.draw_number(x, y, self.current_value)
+    
+    def draw_d12(self, x, y, size):
+        """Draw a d12 (dodecahedron)"""
+        Color(0.6, 0.2, 0.9, 1)  # Purple
+        # Draw as circle with more complex pattern
+        Ellipse(pos=(x - size/2, y - size/2), size=(size, size))
+        
+        Color(1, 1, 1, 1)
+        self.draw_number(x, y, self.current_value)
+    
+    def draw_d100(self, x, y, size):
+        """Draw a d100 (percentile)"""
+        Color(0.9, 0.9, 0.2, 1)  # Yellow
+        # Draw as two d10s side by side
+        quarter_size = size / 4
+        Ellipse(pos=(x - size/2, y - quarter_size), size=(size/2, size/2))
+        Ellipse(pos=(x, y - quarter_size), size=(size/2, size/2))
+        
+        Color(0, 0, 0, 1)
+        self.draw_number(x, y, self.current_value)
+    
+    def draw_generic_dice(self, x, y, size):
+        """Draw a generic dice"""
+        Color(0.7, 0.7, 0.7, 1)  # Gray
+        Ellipse(pos=(x - size/2, y - size/2), size=(size, size))
+        
+        Color(0, 0, 0, 1)
+        self.draw_number(x, y, self.current_value)
+    
+    def draw_number(self, x, y, number):
+        """Draw the number on the dice (placeholder - in real app would use Label)"""
+        # This is a simplified number display
+        # In a real implementation, you'd overlay a Label widget
+        pass
+        
+    def start_roll(self, duration=2.0):
+        """Start the dice rolling animation"""
+        self.rolling = True
+        self.current_value = 1
+        
+        # Schedule value changes to simulate rolling
+        self.animation_event = Clock.schedule_interval(self.update_value, 0.1)
+        
+        # Schedule the end of animation
+        Clock.schedule_once(lambda dt: self.stop_roll(), duration)
+        
+        # Add visual animation (rotation and scaling)
+        rotation_anim = Animation(rotation=720, duration=duration)  # Two full rotations
+        rotation_anim.start(self)
+        
+        scale_anim = (Animation(scale=1.3, duration=duration/3) + 
+                      Animation(scale=0.8, duration=duration/3) + 
+                      Animation(scale=1.0, duration=duration/3))
+        scale_anim.start(self)
+    
+    def update_value(self, dt):
+        """Update the displayed value during rolling"""
+        if self.rolling:
+            self.current_value = random.randint(1, self.dice_type)
+            
+    def stop_roll(self):
+        """Stop the rolling animation and get final result"""
+        if self.animation_event:
+            self.animation_event.cancel()
+        
+        self.rolling = False
+        # Final roll
+        final_result = random.randint(1, self.dice_type)
+        self.current_value = final_result
+        
+        # Stop rotation at a nice angle
+        self.rotation = 0
+        return final_result
+
+class RollScreen(Screen):
+    """Screen for displaying dice rolls and results"""
+    
+    roll_type = StringProperty("")  # "attack", "saving_throw", "ability_check", "basic", "damage"
+    dice_type = NumericProperty(20)
+    result = NumericProperty(0)
+    modifier = NumericProperty(0)
+    total = NumericProperty(0)
+    roll_description = StringProperty("")
+    critical_hit = BooleanProperty(False)
+    critical_fail = BooleanProperty(False)
+    show_attack_result = BooleanProperty(False)
+    attack_success = BooleanProperty(False)
+    
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.app = None
+        self.dice_animation = None
+        self.roll_callback = None
+        self.weapon_data = None  # Store weapon data for damage rolls
+        self.target_ac = 15  # Default AC for attack rolls
+        
+    def on_enter(self):
+        """Called when the screen is displayed"""
+        # Get reference to the app instance
+        if not self.app:
+            from kivy.app import App
+            self.app = App.get_running_app()
+        
+        # Reset UI state completely
+        self.show_attack_result = False
+        self.attack_success = False
+        self.result = 0
+        self.total = 0
+        
+        # Clear result label immediately
+        if self.ids.get('result_label'):
+            self.ids.result_label.text = "Preparing roll..."
+        
+        # Clear any existing content
+        if self.ids.get('animation_container'):
+            self.ids.animation_container.clear_widgets()
+        if self.ids.get('followup_container'):
+            self.ids.followup_container.clear_widgets()
+        if self.ids.get('attack_result_container'):
+            self.ids.attack_result_container.clear_widgets()
+        
+        # Cancel any existing update events
+        if hasattr(self, 'update_event'):
+            self.update_event.cancel()
+        
+        # Start the roll animation with a small delay to ensure layout is ready
+        Clock.schedule_once(lambda dt: self.start_roll(), 0.2)
+
+    def setup_roll(self, roll_type, dice_type=20, modifier=0, description="", callback=None, weapon_data=None, target_ac=15):
+        """Set up the roll parameters"""
+        self.roll_type = roll_type
+        self.dice_type = dice_type
+        self.modifier = modifier
+        self.roll_description = description
+        self.roll_callback = callback
+        self.weapon_data = weapon_data
+        self.target_ac = target_ac
+        self.critical_hit = False
+        self.critical_fail = False
+        self.show_attack_result = False
+        self.attack_success = False
+        
+    def start_roll(self):
+        """Start the dice roll animation"""
+        if self.ids.get('animation_container') and self.roll_type != "damage":
+            # Clear any existing animation and text
+            self.ids.animation_container.clear_widgets()
+            
+            # Update result label to show rolling state
+            if self.ids.get('result_label'):
+                self.ids.result_label.text = "Rolling..."
+            
+            # Get container dimensions first
+            container = self.ids.animation_container
+            
+            # Create the dice animation with proper initial positioning
+            self.dice_animation = DiceAnimation(
+                dice_type=self.dice_type,
+                size_hint=(None, None),
+                size=(140, 140)
+            )
+            
+            # Calculate center position before adding to container
+            def setup_animation(*args):
+                if container.size[0] > 0 and container.size[1] > 0:
+                    # Position dice in center of container
+                    self.dice_animation.center_x = container.center_x
+                    self.dice_animation.center_y = container.center_y
+                    
+                    # Add the dice to container
+                    container.add_widget(self.dice_animation)
+                    
+                    # Create text label positioned below dice
+                    self.current_value_label = Label(
+                        text=str(self.dice_animation.current_value),
+                        font_size=24,
+                        bold=True,
+                        color=(1, 1, 0.8, 1),  # Light yellow
+                        size_hint=(None, None),
+                        size=(80, 30),
+                        center_x=container.center_x,
+                        y=self.dice_animation.y - 60
+                    )
+                    container.add_widget(self.current_value_label)
+                    
+                    # Start the animation
+                    self.dice_animation.start_roll(duration=2.0)
+                    
+                    # Schedule periodic updates of the text
+                    self.update_event = Clock.schedule_interval(self.update_dice_text, 0.15)
+                    
+                    # Schedule the result display
+                    Clock.schedule_once(lambda dt: self.show_result(), 2.3)
+            
+            # Wait for layout to be complete, then setup animation
+            Clock.schedule_once(setup_animation, 0.1)
+        else:
+            # For damage rolls, show result immediately
+            if self.ids.get('result_label'):
+                self.ids.result_label.text = "Calculating damage..."
+            Clock.schedule_once(lambda dt: self.show_result(), 0.1)
+    
+    def update_dice_text(self, dt):
+        """Update the dice value text during animation"""
+        if hasattr(self, 'current_value_label') and self.dice_animation:
+            self.current_value_label.text = str(self.dice_animation.current_value)
+            if self.dice_animation.rolling:
+                self.current_value_label.color = (1, 1, 0, 1)  # Yellow while rolling
+                # Keep result label showing "Rolling..." during animation
+                if self.ids.get('result_label'):
+                    self.ids.result_label.text = "Rolling..."
+            else:
+                self.current_value_label.color = (1, 1, 1, 1)  # White when stopped
+                if hasattr(self, 'update_event'):
+                    self.update_event.cancel()
+    
+    def show_result(self):
+        """Display the roll result"""
+        if self.dice_animation and self.roll_type != "damage":
+            # Get the final result from animation
+            roll_result = self.dice_animation.current_value
+        else:
+            # For damage rolls, calculate directly
+            roll_result = random.randint(1, self.dice_type)
+        
+        self.result = roll_result
+        self.total = roll_result + self.modifier
+        
+        # Check for critical hits/fails
+        if self.dice_type == 20 and self.roll_type in ["attack", "saving_throw", "ability_check"]:
+            self.critical_hit = (roll_result == 20)
+            self.critical_fail = (roll_result == 1)
+        
+        # Update the result label
+        self.update_result_display()
+        
+        # Handle follow-up actions based on roll type
+        if self.roll_type == "attack":
+            self.handle_attack_result()
+        elif self.roll_type == "damage":
+            self.handle_damage_result()
+    
+    def update_result_display(self):
+        """Update the result display with formatting"""
+        if self.ids.get('result_label'):
+            if self.roll_type == "damage":
+                result_text = f"Damage: {self.total}"
+                if self.critical_hit:
+                    result_text += " (Critical Damage!)"
+            else:
+                if self.modifier != 0:
+                    modifier_text = f" + {self.modifier}" if self.modifier > 0 else f" - {abs(self.modifier)}"
+                    result_text = f"{self.result}{modifier_text} = {self.total}"
+                else:
+                    result_text = f"Result: {self.result}"
+                
+                if self.critical_hit:
+                    result_text += " (CRITICAL HIT!)"
+                elif self.critical_fail:
+                    result_text += " (CRITICAL FAIL!)"
+            
+            self.ids.result_label.text = result_text
+    
+    def handle_attack_result(self):
+        """Handle the result of an attack roll"""
+        # Determine if attack hits (critical hit always hits, critical fail always misses)
+        if self.critical_hit:
+            self.attack_success = True
+            hit_text = "CRITICAL HIT! Attack succeeds!"
+        elif self.critical_fail:
+            self.attack_success = False
+            hit_text = "CRITICAL MISS! Attack fails!"
+        else:
+            self.attack_success = self.total >= self.target_ac
+            if self.attack_success:
+                hit_text = f"HIT! (AC {self.target_ac})"
+            else:
+                hit_text = f"MISS! (AC {self.target_ac})"
+        
+        self.show_attack_result = True
+        
+        # Add attack result display
+        if self.ids.get('attack_result_container'):
+            self.ids.attack_result_container.clear_widgets()
+            
+            result_layout = BoxLayout(orientation='vertical', spacing=10)
+            
+            # Hit/miss label
+            hit_label = Label(
+                text=hit_text,
+                color=(0.2, 0.8, 0.2, 1) if self.attack_success else (0.8, 0.2, 0.2, 1),
+                font_size=18,
+                bold=True,
+                size_hint_y=None,
+                height=40
+            )
+            result_layout.add_widget(hit_label)
+            
+            # Buttons
+            button_layout = BoxLayout(spacing=10, size_hint_y=None, height=60)
+            
+            if self.attack_success:
+                # Attack hit - offer damage roll
+                damage_btn = PrimaryButton(
+                    text="Roll Damage",
+                    size_hint_x=0.5
+                )
+                damage_btn.bind(on_press=self.roll_damage)
+                button_layout.add_widget(damage_btn)
+            
+            # Always offer to go back to main
+            main_btn = PrimaryButton(
+                text="Back to Main",
+                size_hint_x=0.5,
+                bg_color=[0.6, 0.6, 0.6, 1] if self.attack_success else [0.541, 0.169, 0.886, 1]
+            )
+            main_btn.bind(on_press=lambda x: self.back_to_main())
+            button_layout.add_widget(main_btn)
+            
+            result_layout.add_widget(button_layout)
+            self.ids.attack_result_container.add_widget(result_layout)
+    
+    def handle_damage_result(self):
+        """Handle the result of a damage roll"""
+        # Show damage-specific buttons
+        if self.ids.get('followup_container'):
+            self.ids.followup_container.clear_widgets()
+            
+            button_layout = BoxLayout(spacing=20, size_hint_y=None, height=60)
+            
+            # Roll damage again
+            reroll_btn = PrimaryButton(
+                text="Roll Again",
+                size_hint_x=0.5
+            )
+            reroll_btn.bind(on_press=lambda x: self.roll_damage(None))
+            button_layout.add_widget(reroll_btn)
+            
+            # Back to main
+            main_btn = PrimaryButton(
+                text="Back to Main",
+                size_hint_x=0.5
+            )
+            main_btn.bind(on_press=lambda x: self.back_to_main())
+            button_layout.add_widget(main_btn)
+            
+            self.ids.followup_container.add_widget(button_layout)
+    
+    def roll_damage(self, instance):
+        """Roll damage for an attack"""
+        if not self.weapon_data:
+            # Default damage if no weapon data
+            damage_dice = "1d8"
+            damage_bonus = 0
+            damage_type = "slashing"
+        else:
+            damage_dice = self.weapon_data.get('damage_dice', '1d8')
+            damage_bonus = self.weapon_data.get('damage_bonus', 0)
+            damage_type = self.weapon_data.get('damage_type', 'slashing')
+        
+        # Parse damage dice (e.g., "2d6")
+        if 'd' in damage_dice:
+            parts = damage_dice.split('d')
+            count = int(parts[0]) if parts[0] else 1
+            sides = int(parts[1])
+            
+            # Double dice on critical hit
+            if self.critical_hit:
+                count *= 2
+                description = f"Critical Damage: {count}d{sides}"
+            else:
+                description = f"Damage: {damage_dice}"
+            
+            if damage_bonus != 0:
+                description += f" + {damage_bonus}"
+            description += f" ({damage_type})"
+            
+            # Calculate total damage
+            dice_damage = sum(random.randint(1, sides) for _ in range(count))
+            total_damage = dice_damage + damage_bonus
+            
+            # Set up damage roll display
+            self.setup_roll(
+                roll_type="damage",
+                dice_type=sides,
+                modifier=damage_bonus,
+                description=description,
+                weapon_data=self.weapon_data
+            )
+            
+            # Set the result directly (showing individual dice + bonus)
+            self.result = dice_damage
+            self.total = total_damage
+            self.show_result()
+    
+    def new_roll(self):
+        """Start a new roll of the same type"""
+        # Cancel any existing update events
+        if hasattr(self, 'update_event'):
+            self.update_event.cancel()
+        
+        # Reset critical states
+        self.critical_hit = False
+        self.critical_fail = False
+        self.show_attack_result = False
+        self.attack_success = False
+        self.result = 0
+        self.total = 0
+        
+        # Clear result label immediately
+        if self.ids.get('result_label'):
+            self.ids.result_label.text = "Preparing roll..."
+        
+        # Clear containers
+        if self.ids.get('animation_container'):
+            self.ids.animation_container.clear_widgets()
+        if self.ids.get('followup_container'):
+            self.ids.followup_container.clear_widgets()
+        if self.ids.get('attack_result_container'):
+            self.ids.attack_result_container.clear_widgets()
+        
+        # Restart the roll with a small delay
+        Clock.schedule_once(lambda dt: self.start_roll(), 0.2)
+    
+    def back_to_main(self):
+        """Return to the main screen"""
+        self.app.screen_manager.current = 'main'
+
+class RollManager:
+    """Manager class for handling different types of rolls"""
+    
+    def __init__(self, app):
+        self.app = app
+        self.current_weapon_index = 0
+        self.current_ability = "STR"
+
+    def show_ability_dialog(self, roll_type):
+        """Show ability selection dialog"""
+        from components.dialogs import AbilityDialog
+        
+        def on_dialog_dismiss(instance):
+            if instance.selected_option:
+                self.current_ability = instance.selected_option
+                if roll_type == "saving_throw":
+                    self.roll_saving_throw(instance.selected_option)
+                elif roll_type == "ability_check":
+                    self.roll_ability_check(instance.selected_option)
+        dialog = AbilityDialog()
+        dialog.bind(on_dismiss=on_dialog_dismiss)
+        dialog.open()
+
+    def show_weapon_dialog(self):
+        """Show weapon selection dialog"""
+        if not self.app.current_profile:
+            return None
+        
+        weapons = self.app.current_profile.get('weapons', [])
+        if not weapons:
+            # No weapons available, just roll a basic attack
+            return self.roll_attack(0)
+        
+        from components.dialogs import WeaponDialog
+        
+        def on_dialog_dismiss(instance):
+            if instance.selected_option is not None:
+                weapon_index = weapons.index(next(w for w in weapons if w.get('name') == instance.selected_option))
+                self.roll_attack(weapon_index)
+        
+        dialog = WeaponDialog(weapons)
+        dialog.bind(on_dismiss=on_dialog_dismiss)
+        dialog.open()
+
+    def show_custom_dice_dialog(self):
+        """Show custom dice selection dialog"""
+        from components.dialogs import DiceDialog
+        
+        def on_dialog_dismiss(instance):
+            if instance.selected_option:
+                if instance.selected_option == "Custom":
+                    self.show_custom_dice_input()
+                else:
+                    # Parse dice notation (e.g., "2d6")
+                    if 'd' in instance.selected_option:
+                        parts = instance.selected_option.split('d')
+                        count = int(parts[0]) if parts[0] else 1
+                        sides = int(parts[1])
+                        self.roll_custom_dice(count, sides)
+        
+        dialog = DiceDialog()
+        dialog.bind(on_dismiss=on_dialog_dismiss)
+        dialog.open()
+
+    def show_custom_dice_input(self):
+        """Show custom dice input dialog"""
+        # This would be implemented with a more complex dialog
+        # For now, just roll 1d20 as a placeholder
+        self.roll_custom_dice(1, 20)
+
+    def roll_custom_dice(self, count, sides):
+        """Roll custom dice"""
+        # For multiple dice, we'll need to modify the roll screen to handle this
+        # For now, just roll one die of the specified type
+        roll_screen = self.app.screen_manager.get_screen('roll')
+        roll_screen.setup_roll(
+            roll_type="custom",
+            dice_type=sides,
+            modifier=0,
+            description=f"{count}d{sides} Roll"
+        )
+        
+        self.app.screen_manager.current = 'roll'
+
+    def roll_attack(self, weapon_index=0):
+        """Roll an attack with the selected weapon"""
+        if not self.app.current_profile:
+            return None
+        
+        profile = self.app.current_profile
+        weapons = profile.get('weapons', [])
+        
+        # Create sample weapons if none exist
+        if not weapons:
+            weapons = [
+                {
+                    'name': 'Longsword',
+                    'ability': 'STR',
+                    'proficient': True,
+                    'damage_dice': '1d8',
+                    'damage_bonus': calculate_modifier(profile['abilities'].get('STR', 10)),
+                    'damage_type': 'slashing'
+                },
+                {
+                    'name': 'Dagger',
+                    'ability': 'DEX',
+                    'proficient': True,
+                    'damage_dice': '1d4',
+                    'damage_bonus': calculate_modifier(profile['abilities'].get('DEX', 10)),
+                    'damage_type': 'piercing'
+                }
+            ]
+            # Update profile with default weapons
+            profile['weapons'] = weapons
+        
+        if weapon_index >= len(weapons):
+            weapon_index = 0
+            
+        weapon = weapons[weapon_index]
+        ability = weapon.get('ability', 'STR')
+        proficient = weapon.get('proficient', False)
+        
+        # Calculate modifiers
+        ability_mod = calculate_modifier(profile['abilities'].get(ability, 10))
+        prof_bonus = calculate_proficiency_bonus(profile['level']) if proficient else 0
+        modifier = ability_mod + prof_bonus
+        
+        # Set up the roll screen
+        roll_screen = self.app.screen_manager.get_screen('roll')
+        roll_screen.setup_roll(
+            roll_type="attack",
+            dice_type=20,
+            modifier=modifier,
+            description=f"Attack with {weapon.get('name', 'Weapon')}",
+            weapon_data=weapon,
+            target_ac=15  # Default AC
+        )
+        
+        self.app.screen_manager.current = 'roll'
+        return modifier
+    
+    def roll_saving_throw(self, ability):
+        """Roll a saving throw for the specified ability"""
+        if not self.app.current_profile:
+            return None
+        
+        profile = self.app.current_profile
+        proficient = ability in profile.get('saving_throw_proficiencies', [])
+        
+        # Calculate modifiers
+        ability_mod = calculate_modifier(profile['abilities'].get(ability, 10))
+        prof_bonus = calculate_proficiency_bonus(profile['level']) if proficient else 0
+        modifier = ability_mod + prof_bonus
+        
+        # Set up the roll screen
+        roll_screen = self.app.screen_manager.get_screen('roll')
+        roll_screen.setup_roll(
+            roll_type="saving_throw",
+            dice_type=20,
+            modifier=modifier,
+            description=f"{ability} Saving Throw"
+        )
+        
+        self.app.screen_manager.current = 'roll'
+        return modifier
+    
+    def roll_ability_check(self, ability):
+        """Roll an ability check for the specified ability"""
+        if not self.app.current_profile:
+            return None
+        
+        profile = self.app.current_profile
+        
+        # Calculate modifier
+        ability_mod = calculate_modifier(profile['abilities'].get(ability, 10))
+        modifier = ability_mod
+        
+        # Set up the roll screen
+        roll_screen = self.app.screen_manager.get_screen('roll')
+        roll_screen.setup_roll(
+            roll_type="ability_check",
+            dice_type=20,
+            modifier=modifier,
+            description=f"{ability} Check"
+        )
+        
+        self.app.screen_manager.current = 'roll'
+        return modifier
+    
+    def roll_dice(self, dice_type):
+        """Roll a basic die with no modifiers"""
+        # Set up the roll screen
+        roll_screen = self.app.screen_manager.get_screen('roll')
+        roll_screen.setup_roll(
+            roll_type="basic",
+            dice_type=dice_type,
+            modifier=0,
+            description=f"d{dice_type} Roll"
+        )
+        
+        self.app.screen_manager.current = 'roll'
+        return 0

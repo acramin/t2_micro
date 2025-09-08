@@ -1,0 +1,42 @@
+#:kivy 2.2.1
+
+<ProfileScreen>:
+    name: "profiles"
+    
+    BoxLayout:
+        orientation: "vertical"
+        padding: 24
+        spacing: 16
+        
+        # Header
+        BoxLayout:
+            size_hint_y: None
+            height: 56
+            spacing: 16
+            
+            Label:
+                text: "Character Profiles"
+                color: 0.925, 0.941, 0.945, 1  # #ECF0F1
+                size_hint_x: 0.7
+                font_size: 24
+                bold: True
+                text_size: self.size
+                halign: "left"
+                valign: "middle"
+            
+            PrimaryButton:
+                text: "Back"
+                size_hint_x: 0.3
+                on_press: root.back_to_main()
+        
+        # Profiles list
+        ScrollView:
+            do_scroll_x: False
+            do_scroll_y: True
+            
+            GridLayout:
+                id: profiles_container
+                cols: 1
+                size_hint_y: None
+                height: self.minimum_height
+                spacing: 8
