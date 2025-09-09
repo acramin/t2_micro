@@ -48,10 +48,37 @@ class DnDDiceRollerApp(App):
     screen_manager = ObjectProperty(None)
     current_profile = DictProperty(None, allownone=True)
     roll_manager = ObjectProperty(None)
+    current_language = 'en'  # Default to English
+    
+    # Language translations
+    translations = {
+        'en': {
+            'title': 'D&D Dice Roller',
+            'current_character': 'Current Character: ',
+            'change': 'Change',
+            'attack': 'Attack',
+            'saving_throw': 'Saving Throw',
+            'ability_check': 'Ability Check',
+            'custom': 'Custom',
+            'exit': 'Exit',
+            'language_button': 'PT-BR'
+        },
+        'pt': {
+            'title': 'Rolador de Dados D&D',
+            'current_character': 'Personagem Atual: ',
+            'change': 'Mudar',
+            'attack': 'Ataque',
+            'saving_throw': 'Teste de Resistência',
+            'ability_check': 'Teste de Habilidade',
+            'custom': 'Personalizado',
+            'exit': 'Sair',
+            'language_button': 'EN-US'
+        }
+    }
     
     def build(self):
         """Build the application"""
-        self.title = "D&D Dice Roller"
+        self.title = self.get_text('title')
         
         # Initialize screen manager
         self.screen_manager = ScreenManager(transition=FadeTransition())
@@ -66,6 +93,22 @@ class DnDDiceRollerApp(App):
         self.load_profiles()
         
         return self.screen_manager
+    
+    def get_text(self, key):
+        """Get translated text for the current language"""
+        return self.translations.get(self.current_language, {}).get(key, key)
+    
+    def toggle_language(self):
+        """Toggle between English and Portuguese"""
+        self.current_language = 'pt' if self.current_language == 'en' else 'en'
+        self.title = self.get_text('title')
+        print(f"Language changed to: {'Portuguese' if self.current_language == 'pt' else 'English'}")
+        
+        # Update the language button text in the main screen
+        main_screen = self.screen_manager.get_screen('main')
+        if hasattr(main_screen, 'ids'):
+            # Force refresh of the screen content
+            main_screen.on_enter()
     
     def load_profiles(self):
         """Load character profiles from JSON files"""

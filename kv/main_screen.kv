@@ -149,11 +149,39 @@
                     font_size: 16
                     on_press: root.show_custom_dice_dialog()
 
-        # App title/branding (bottom)
-        Label:
-            text: "D&D Dice Roller"
-            color: 0.7, 0.8, 0.9, 0.6  # Subtle branding
-            font_size: 16
-            size_hint: (None, None)
-            size: (200, 30)
-            pos_hint: {'center_x': 0.5, 'y': 0.02}
+        # Bottom section with exit button and app title
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint: (0.9, None)
+            height: 50
+            pos_hint: {'center_x': 0.5, 'y': 0.03}
+            spacing: 20
+
+            # Exit button (left side)
+            PrimaryButton:
+                text: "Exit"
+                size_hint: (None, None)
+                size: (100, 40)
+                bg_color: [0.6, 0.2, 0.2, 1]  # Dark red for exit
+                font_size: 16
+                on_press: app.stop()
+
+            # Spacer to push title to center
+            Widget:
+                size_hint_x: 1
+
+            # App title/branding (center-right)
+            Label:
+                text: "D&D Dice Roller"
+                color: 0.7, 0.8, 0.9, 0.6  # Subtle branding
+                font_size: 16
+                size_hint: (None, None)
+                size: (200, 30)
+                text_size: self.size
+                halign: "right"
+                valign: "middle"
+
+            # Right spacer for balance
+            Widget:
+                size_hint: (None, None)
+                size: (50, 30)
