@@ -532,7 +532,7 @@ class RollManager:
 
     def show_ability_dialog(self, roll_type):
         """Show ability selection dialog"""
-        from components.dialogs import AbilityDialog
+        from components.dialogs import ComprehensiveAbilityDialog
         
         def on_dialog_dismiss(instance):
             if instance.selected_option:
@@ -541,31 +541,50 @@ class RollManager:
                     self.roll_saving_throw(instance.selected_option)
                 elif roll_type == "ability_check":
                     self.roll_ability_check(instance.selected_option)
-        dialog = AbilityDialog()
+        
+        dialog = ComprehensiveAbilityDialog(profile_data=self.app.current_profile)
         dialog.bind(on_dismiss=on_dialog_dismiss)
         dialog.open()
 
     def show_weapon_dialog(self):
         """Show weapon selection dialog"""
+        print("\n" + "="*40)
+        print("⚔️  WEAPON SELECTION DEBUG")
+        print("="*40)
+
         if not self.app.current_profile:
+            print("❌ ERROR: No current profile found!")
             return None
-        
+
+        profile = self.app.current_profile
+        print(f"📋 Profile: {profile.get('name', 'Unknown')}")
+
         weapons = self.app.current_profile.get('weapons', [])
+        print(f"🔍 Found {len(weapons)} weapons in profile:")
+
+        for i, weapon in enumerate(weapons):
+            print(f"   {i}: {weapon.get('name', 'Unnamed')} (Ability: {weapon.get('ability', 'STR')}, Proficient: {weapon.get('proficient', False)})")
+
         if not weapons:
-            # No weapons available, just roll a basic attack
-            return self.roll_attack(0)
-        
+            print("❌ ERROR: No weapons found in profile!")
+            print("💡 Please create weapons in the profile editor first")
+            return None
+
+        print("✅ Opening weapon selection dialog...")
+        print("="*40 + "\n")
+
         from components.dialogs import WeaponDialog
-        
+
         def on_dialog_dismiss(instance):
             if instance.selected_option is not None:
                 weapon_index = weapons.index(next(w for w in weapons if w.get('name') == instance.selected_option))
+                print(f"🎯 Selected weapon index: {weapon_index}")
                 self.roll_attack(weapon_index)
-        
+
         dialog = WeaponDialog(weapons)
         dialog.bind(on_dismiss=on_dialog_dismiss)
         dialog.open()
-
+    
     def show_custom_dice_dialog(self):
         """Show custom dice selection dialog"""
         from components.dialogs import DiceDialog
@@ -608,14 +627,34 @@ class RollManager:
 
     def roll_attack(self, weapon_index=0):
         """Roll an attack with the selected weapon"""
+        print("\n" + "="*50)
+        print("🎲 WEAPON ATTACK CALCULATION DEBUG")
+        print("="*50)
+
         if not self.app.current_profile:
+            print("❌ ERROR: No current profile found!")
             return None
-        
+
         profile = self.app.current_profile
+        print(f"📋 Profile Name: {profile.get('name', 'Unknown')}")
+        print(f"📊 Profile Level: {profile.get('level', 1)}")
+
+        # Print all ability scores
+        abilities = profile.get('abilities', {})
+        print("🏋️  Ability Scores:")
+        for ability, score in abilities.items():
+            modifier = (score - 10) // 2
+            print(f"   {ability}: {score} (modifier: {modifier:+d})")
+
         weapons = profile.get('weapons', [])
-        
-        # Create sample weapons if none exist
+        print(f"⚔️  Weapons in Profile: {len(weapons)}")
+
+        for i, weapon in enumerate(weapons):
+            print(f"   Weapon {i}: {weapon}")
+
+        # Only create sample weapons if this is a fresh profile with no weapons ever created
         if not weapons:
+            print("⚠️  No weapons found, creating default weapons")
             weapons = [
                 {
                     'name': 'Longsword',
@@ -636,19 +675,35 @@ class RollManager:
             ]
             # Update profile with default weapons
             profile['weapons'] = weapons
-        
+
         if weapon_index >= len(weapons):
+            print(f"❌ ERROR: Weapon index {weapon_index} out of range (max: {len(weapons)-1})")
             weapon_index = 0
-            
+
         weapon = weapons[weapon_index]
+        print(f"\n🎯 Selected Weapon Details:")
+        print(f"   Name: {weapon.get('name', 'Unknown')}")
+        print(f"   Ability: {weapon.get('ability', 'STR')}")
+        print(f"   Proficient: {weapon.get('proficient', False)}")
+        print(f"   Damage Dice: {weapon.get('damage_dice', 'd6')}")
+        print(f"   Damage Bonus: {weapon.get('damage_bonus', 0)}")
+
         ability = weapon.get('ability', 'STR')
         proficient = weapon.get('proficient', False)
-        
+
         # Calculate modifiers
-        ability_mod = calculate_modifier(profile['abilities'].get(ability, 10))
+        ability_score = profile['abilities'].get(ability, 10)
+        ability_mod = calculate_modifier(ability_score)
         prof_bonus = calculate_proficiency_bonus(profile['level']) if proficient else 0
         modifier = ability_mod + prof_bonus
-        
+
+        print(f"\n🧮 Modifier Calculation:")
+        print(f"   Ability Score ({ability}): {ability_score}")
+        print(f"   Ability Modifier: {ability_mod}")
+        print(f"   Proficiency Bonus: {prof_bonus} ({'proficient' if proficient else 'not proficient'})")
+        print(f"   Total Modifier: {modifier}")
+        print("="*50 + "\n")
+
         # Set up the roll screen
         roll_screen = self.app.screen_manager.get_screen('roll')
         roll_screen.setup_roll(
@@ -658,7 +713,7 @@ class RollManager:
             description=f"Attack with {weapon.get('name', 'Weapon')}",
             weapon_data=weapon
         )
-        
+
         self.app.screen_manager.current = 'roll'
         return modifier
     
@@ -687,16 +742,55 @@ class RollManager:
         self.app.screen_manager.current = 'roll'
         return modifier
     
-    def roll_ability_check(self, ability):
-        """Roll an ability check for the specified ability"""
+    def roll_ability_check(self, ability_or_skill):
+        """Roll an ability check for the specified ability or skill"""
         if not self.app.current_profile:
             return None
         
         profile = self.app.current_profile
         
-        # Calculate modifier
-        ability_mod = calculate_modifier(profile['abilities'].get(ability, 10))
-        modifier = ability_mod
+        # Define skill-to-ability mapping
+        skill_abilities = {
+            "Acrobatics": "DEX",
+            "Animal Handling": "WIS",
+            "Arcana": "INT",
+            "Athletics": "STR",
+            "Deception": "CHA",
+            "History": "INT",
+            "Insight": "WIS",
+            "Intimidation": "CHA",
+            "Investigation": "INT",
+            "Medicine": "WIS",
+            "Nature": "INT",
+            "Perception": "WIS",
+            "Performance": "CHA",
+            "Persuasion": "CHA",
+            "Religion": "INT",
+            "Sleight of Hand": "DEX",
+            "Stealth": "DEX",
+            "Survival": "WIS"
+        }
+        
+        # Check if it's a skill or basic ability
+        if ability_or_skill in skill_abilities:
+            # It's a skill
+            ability = skill_abilities[ability_or_skill]
+            skill_proficiencies = profile.get('skill_proficiencies', [])
+            is_proficient = ability_or_skill in skill_proficiencies
+            
+            # Calculate modifiers
+            ability_mod = calculate_modifier(profile['abilities'].get(ability, 10))
+            prof_bonus = calculate_proficiency_bonus(profile['level']) if is_proficient else 0
+            modifier = ability_mod + prof_bonus
+            
+            description = f"{ability_or_skill} ({ability}) Check"
+            if is_proficient:
+                description += " (Proficient)"
+        else:
+            # It's a basic ability check
+            ability_mod = calculate_modifier(profile['abilities'].get(ability_or_skill, 10))
+            modifier = ability_mod
+            description = f"{ability_or_skill} Check"
         
         # Set up the roll screen
         roll_screen = self.app.screen_manager.get_screen('roll')
@@ -704,7 +798,7 @@ class RollManager:
             roll_type="ability_check",
             dice_type=20,
             modifier=modifier,
-            description=f"{ability} Check"
+            description=description
         )
         
         self.app.screen_manager.current = 'roll'

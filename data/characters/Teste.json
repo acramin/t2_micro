@@ -1,23 +1,20 @@
 {
-    "name": "PIN PIN PINadsa",
+    "name": "Teste",
     "level": 1,
     "abilities": {
-        "STR": 18,
-        "DEX": 18,
-        "CON": 18,
+        "STR": 16,
+        "DEX": 10,
+        "CON": 10,
         "INT": 10,
         "WIS": 10,
         "CHA": 10
     },
-    "saving_throw_proficiencies": [
-        "STR",
-        "CHA"
-    ],
+    "saving_throw_proficiencies": [],
     "skill_proficiencies": [],
     "weapons": [
         {
-            "name": "GUN",
-            "ability": "DEX",
+            "name": "New Weapon",
+            "ability": "STR",
             "damage_dice": "d6",
             "damage_bonus": 0,
             "proficient": true

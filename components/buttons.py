@@ -17,7 +17,7 @@ class PrimaryButton(Button):
         # Clean visual setup
         self.background_normal = ''
         self.background_down = ''
-        self.background_color = [0.541, 0.169, 0.886, 1]  # Purple #8A2BE2
+        self.background_color = [0.863, 0.078, 0.235, 1]  # Crimson Red #DC143C
         self.color = [1, 1, 1, 1]  # White text
         self.bold = True
 
@@ -65,9 +65,9 @@ class DiceButton(Button):
         if not hasattr(self, 'background_down') or self.background_down == '':
             self.background_down = ''
         if not hasattr(self, 'background_color') or self.background_color == [1, 1, 1, 1]:
-            self.background_color = [0.831, 0.686, 0.216, 1]  # Gold color #D4AF37
+            self.background_color = [0.863, 0.078, 0.235, 1]  # Crimson red (same as PrimaryButton)
         if not hasattr(self, 'color') or self.color == [1, 1, 1, 1]:
-            self.color = [0.173, 0.243, 0.314, 1]  # Dark blue text #2C3E50
+            self.color = [1, 1, 1, 1]  # White text (same as PrimaryButton)
         if not hasattr(self, 'bold') or not self.bold:
             self.bold = True
 

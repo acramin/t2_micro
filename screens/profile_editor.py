@@ -115,9 +115,19 @@ class ProfileEditorScreen(Screen):
         
         # Ability scores
         abilities = self.profile_data.get('abilities', {})
+        print("📖 Loading ability scores:")
         for ability, value in abilities.items():
-            if self.ids.get(f'ability_{ability.lower()}'):
-                self.ids[f'ability_{ability.lower()}'].text = str(value)
+            print(f"   {ability}: {value}")
+            ability_id = f'ability_{ability.lower()}'
+            if self.ids.get(ability_id):
+                ability_input = self.ids[ability_id]
+                ability_input.ability_value = value
+                # Also update the text input display
+                if hasattr(ability_input, 'ids') and 'ability_value_input' in ability_input.ids:
+                    ability_input.ids.ability_value_input.text = str(value)
+                print(f"   ✅ Set {ability} to {value}")
+            else:
+                print(f"   ❌ Widget {ability_id} not found!")
         
         # Saving throw proficiencies
         saving_throws = self.profile_data.get('saving_throw_proficiencies', [])
@@ -188,12 +198,17 @@ class ProfileEditorScreen(Screen):
             self.profile_data['level'] = 1
         
         # Ability scores
+        print("💾 Saving ability scores:")
         for ability in ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA']:
-            try:
-                value = int(self.ids[f'ability_{ability.lower()}'].text)
-                self.profile_data['abilities'][ability] = validate_ability_score(value)
-            except (ValueError, KeyError):
-                pass
+            ability_id = f'ability_{ability.lower()}'
+            if self.ids.get(ability_id):
+                ability_input = self.ids[ability_id]
+                old_value = self.profile_data['abilities'].get(ability, 10)
+                new_value = validate_ability_score(ability_input.ability_value)
+                self.profile_data['abilities'][ability] = new_value
+                print(f"   {ability}: {old_value} → {new_value}")
+            else:
+                print(f"   {ability}: Widget not found!")
         
         # Saving throw proficiencies
         self.profile_data['saving_throw_proficiencies'] = []

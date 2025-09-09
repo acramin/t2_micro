@@ -7,7 +7,7 @@
     FloatLayout:
         canvas.before:
             Color:
-                rgba: 0.173, 0.243, 0.314, 1  # Dark blue background
+                rgba: 0.0, 0.0, 0.0, 1  # Black background
             Rectangle:
                 pos: self.pos
                 size: self.size
@@ -20,7 +20,7 @@
             spacing: 15
             canvas.before:
                 Color:
-                    rgba: 0.2, 0.3, 0.4, 0.8  # Semi-transparent background
+                    rgba: 0.3, 0.3, 0.3, 0.8  # Semi-transparent dark grey background
                 RoundedRectangle:
                     pos: self.pos
                     size: self.size
@@ -41,7 +41,7 @@
                 text: "Change"
                 size_hint_x: 0.3
                 height: 40
-                bg_color: [0.2, 0.6, 0.8, 1]
+                bg_color: [0.863, 0.078, 0.235, 1]  # Crimson red
                 on_press: app.screen_manager.current = "profiles"
 
         # Primary action buttons (centered in upper area)
@@ -58,7 +58,7 @@
                 height: 70
                 font_size: 18
                 bold: True
-                bg_color: [0.9, 0.3, 0.3, 1]  # Red for attack
+                bg_color: [0.7, 0.1, 0.1, 1]  # Dark red for attack
                 on_press: root.initiate_attack_roll()
 
             PrimaryButton:
@@ -67,7 +67,7 @@
                 height: 70
                 font_size: 18
                 bold: True
-                bg_color: [0.3, 0.7, 0.9, 1]  # Blue for saving throw
+                bg_color: [0.863, 0.078, 0.235, 1]  # Crimson red for saving throw
                 on_press: root.initiate_saving_throw()
 
             PrimaryButton:
@@ -76,7 +76,7 @@
                 height: 70
                 font_size: 18
                 bold: True
-                bg_color: [0.3, 0.9, 0.5, 1]  # Green for ability check
+                bg_color: [0.863, 0.078, 0.235, 1]  # Crimson red for ability check
                 on_press: root.initiate_ability_check()
 
         # Dice buttons section (lower center area)
@@ -86,7 +86,7 @@
             pos_hint: {'center_x': 0.5, 'center_y': 0.35}
             canvas.before:
                 Color:
-                    rgba: 0.2, 0.3, 0.4, 0.6  # Semi-transparent background
+                    rgba: 0.3, 0.3, 0.3, 0.6  # Semi-transparent dark grey background
                 RoundedRectangle:
                     pos: self.pos
                     size: self.size
@@ -145,7 +145,7 @@
                 
                 PrimaryButton:
                     text: "Custom"
-                    bg_color: [0.44, 0.50, 0.56, 1]  # Gray for custom
+                    bg_color: [0.863, 0.078, 0.235, 1]  # Crimson red for custom
                     font_size: 16
                     on_press: root.show_custom_dice_dialog()
 

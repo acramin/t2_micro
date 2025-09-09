@@ -69,51 +69,38 @@ class DnDDiceRollerApp(App):
     
     def load_profiles(self):
         """Load character profiles from JSON files"""
-        # For now, create a sample profile with weapons
-        self.current_profile = {
-            'name': 'Sample Character',
-            'level': 5,
-            'abilities': {
-                'STR': 16,
-                'DEX': 14,
-                'CON': 15,
-                'INT': 10,
-                'WIS': 12,
-                'CHA': 8
-            },
-            'weapons': [
-                {
-                    'name': 'Longsword',
-                    'ability': 'STR',
-                    'proficient': True,
-                    'damage_dice': '1d8',
-                    'damage_bonus': 3,  # STR modifier
-                    'damage_type': 'slashing'
+        from utils.file_utils import get_character_files, load_character_profile
+        
+        # Get list of saved character files
+        character_files = get_character_files()
+        
+        if character_files:
+            # Load the first character as current profile
+            first_character = character_files[0].replace('.json', '')
+            self.current_profile = load_character_profile(first_character)
+            print(f"Loaded profile: {self.current_profile.get('name', 'Unknown')}")
+        else:
+            # No saved profiles, create a default one
+            print("No saved profiles found, creating default profile")
+            self.current_profile = {
+                'name': 'Default Character',
+                'level': 1,
+                'abilities': {
+                    'STR': 10,
+                    'DEX': 10,
+                    'CON': 10,
+                    'INT': 10,
+                    'WIS': 10,
+                    'CHA': 10
                 },
-                {
-                    'name': 'Shortbow',
-                    'ability': 'DEX',
-                    'proficient': True,
-                    'damage_dice': '1d6',
-                    'damage_bonus': 2,  # DEX modifier
-                    'damage_type': 'piercing'
-                },
-                {
-                    'name': 'Dagger',
-                    'ability': 'DEX',
-                    'proficient': True,
-                    'damage_dice': '1d4',
-                    'damage_bonus': 2,  # DEX modifier
-                    'damage_type': 'piercing'
-                }
-            ],
-            'saving_throw_proficiencies': ['STR', 'CON']  # For saving throws
-        }
+                'weapons': [],
+                'saving_throw_proficiencies': []
+            }
     
     def on_start(self):
         """Actions to perform when app starts"""
-        # Set background color
-        Window.clearcolor = (0.173, 0.243, 0.314, 1)  # #2C3E50
+        # Set background color - Black
+        Window.clearcolor = (0.0, 0.0, 0.0, 1)  # #000000
         
     def on_stop(self):
         """Actions to perform when app closes"""

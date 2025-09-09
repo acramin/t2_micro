@@ -7,7 +7,7 @@
     FloatLayout:  # FloatLayout for pos_hint support
         canvas.before:
             Color:
-                rgba: 0.173, 0.243, 0.314, 1  # Dark blue background
+                rgba: 0.0, 0.0, 0.0, 1  # Black background
             Rectangle:
                 pos: self.pos
                 size: self.size
@@ -37,7 +37,7 @@
             opacity: 1 if root.roll_type != "damage" else 0
             canvas.before:
                 Color:
-                    rgba: 0.2, 0.3, 0.4, 0.3  # Semi-transparent background
+                    rgba: 0.3, 0.3, 0.3, 0.3  # Semi-transparent dark grey background
                 RoundedRectangle:
                     pos: self.pos
                     size: self.size
@@ -61,7 +61,7 @@
                 valign: "middle"
                 canvas.before:
                     Color:
-                        rgba: 0.3, 0.4, 0.5, 0.7  # Background for better readability
+                        rgba: 0.3, 0.3, 0.3, 0.7  # Semi-transparent dark grey background for better readability
                     RoundedRectangle:
                         pos: self.pos
                         size: self.size
@@ -111,5 +111,5 @@
                 text: "New Roll"
                 size_hint_x: 0.5
                 height: 55
-                bg_color: [0.2, 0.6, 0.8, 1]  # Different color
+                bg_color: [0.863, 0.078, 0.235, 1]  # Crimson red color
                 on_press: root.back_to_main()
