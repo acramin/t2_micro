@@ -15,7 +15,7 @@ import os
 import math
 
 class DiceAnimation(Widget):
-    """Widget for displaying dice rolling animation with placeholder graphics"""
+    """Widget for animating dice rolls with image-based dice"""
     dice_type = NumericProperty(20)
     current_value = NumericProperty(1)
     rotation = NumericProperty(0)
@@ -27,138 +27,74 @@ class DiceAnimation(Widget):
         self.current_value = 1
         self.animation_event = None
         self.rolling = False
-        self.bind(pos=self.update_graphics, size=self.update_graphics)
-        self.bind(current_value=self.update_graphics)
-        self.bind(rotation=self.update_graphics)
-        self.bind(scale=self.update_graphics)
         
-    def update_graphics(self, *args):
-        """Update the dice graphics"""
-        self.canvas.clear()
-        with self.canvas:
-            PushMatrix()
+        # Create the image widget
+        self.dice_image = Image(
+            allow_stretch=True,
+            keep_ratio=True,
+            size_hint=(None, None),
+            size=(120, 120)
+        )
+        
+        self.add_widget(self.dice_image)
+        self.bind(dice_type=self.update_dice_image, pos=self.update_image_pos, size=self.update_image_pos)
+        self.bind(rotation=self.update_transform, scale=self.update_transform)
+        self.update_dice_image()
+        self.update_image_pos()
+    def update_dice_image(self, *args):
+        """Update the dice image based on dice type"""
+        image_path = f"assets/images/d{self.dice_type}.png"
+        if os.path.exists(image_path):
+            self.dice_image.source = image_path
+            print(f"📸 Loaded dice image: {image_path}")
+        else:
+            # Fallback to a default image or keep current
+            print(f"⚠️ Warning: Dice image not found: {image_path}")
+    
+    def update_image_pos(self, *args):
+        """Update the image position when widget moves/resizes"""
+        if hasattr(self, 'dice_image'):
+            self.dice_image.center_x = self.center_x
+            self.dice_image.center_y = self.center_y
+    
+    def update_transform(self, *args):
+        """Apply rotation and scaling to the dice image using canvas"""
+        if hasattr(self, 'dice_image'):
+            # Clear any existing transformations
+            self.dice_image.canvas.before.clear()
+            self.dice_image.canvas.after.clear()
             
-            # Center the dice
-            center_x = self.x + self.width / 2
-            center_y = self.y + self.height / 2 + 40 
+            # Calculate scaled size
+            base_size = 120
+            new_size = base_size * self.scale
+            self.dice_image.size = (new_size, new_size)
             
-            # Apply rotation
-            Rotate(angle=self.rotation, origin=(center_x, center_y))
+            # Re-center after scaling
+            self.dice_image.center_x = self.center_x
+            self.dice_image.center_y = self.center_y
             
-            # Scale - made smaller (was 0.8)
-            size = min(self.width, self.height) * self.scale * 0.6
-            
-            # Draw dice based on type
-            if self.dice_type == 4:
-                self.draw_d4(center_x, center_y, size)
-            elif self.dice_type == 6:
-                self.draw_d6(center_x, center_y, size)
-            elif self.dice_type == 8:
-                self.draw_d8(center_x, center_y, size)
-            elif self.dice_type == 10:
-                self.draw_d10(center_x, center_y, size)
-            elif self.dice_type == 12:
-                self.draw_d12(center_x, center_y, size)
-            elif self.dice_type == 20:
-                self.draw_d20(center_x, center_y, size)
-            elif self.dice_type == 100:
-                self.draw_d100(center_x, center_y, size)
-            else:
-                self.draw_generic_dice(center_x, center_y, size)
+            # Apply rotation if needed
+            if self.rotation != 0:
+                with self.dice_image.canvas.before:
+                    from kivy.graphics import PushMatrix, Rotate
+                    PushMatrix()
+                    Rotate(angle=self.rotation, origin=(self.dice_image.center_x, self.dice_image.center_y))
                 
-            PopMatrix()
-    
-    def draw_d6(self, x, y, size):
-        """Draw a d6 (cube)"""
-        Color(0.8, 0.8, 0.8, 1)  # Light gray
-        half_size = size / 2
-        # Simple square representation
-        from kivy.graphics import Rectangle
-        Rectangle(pos=(x - half_size, y - half_size), size=(size, size))
-        
-        # Draw the number
-        Color(0, 0, 0, 1)  # Black text
-        self.draw_number(x, y, self.current_value)
-    
-    def draw_d20(self, x, y, size):
-        """Draw a d20 (icosahedron)"""
-        Color(0.2, 0.6, 0.9, 1)  # Blue
-        # Draw as circle for simplicity
-        Ellipse(pos=(x - size/2, y - size/2), size=(size, size))
-        
-        # Draw the number
-        Color(1, 1, 1, 1)  # White text
-        self.draw_number(x, y, self.current_value)
-    
-    def draw_d4(self, x, y, size):
-        """Draw a d4 (tetrahedron)"""
-        Color(0.9, 0.2, 0.2, 1)  # Red
-        # Draw as triangle
-        from kivy.graphics import Triangle
-        half_size = size / 2
-        Triangle(points=[x, y + half_size, x - half_size, y - half_size, x + half_size, y - half_size])
-        
-        Color(1, 1, 1, 1)
-        self.draw_number(x, y, self.current_value)
-    
-    def draw_d8(self, x, y, size):
-        """Draw a d8 (octahedron)"""
-        Color(0.2, 0.9, 0.2, 1)  # Green
-        # Draw as diamond
-        from kivy.graphics import Quad
-        half_size = size / 2
-        Quad(points=[x, y + half_size, x - half_size, y, x, y - half_size, x + half_size, y])
-        
-        Color(0, 0, 0, 1)
-        self.draw_number(x, y, self.current_value)
-    
-    def draw_d10(self, x, y, size):
-        """Draw a d10"""
-        Color(0.9, 0.6, 0.2, 1)  # Orange
-        # Draw as pentagon-like shape
-        Ellipse(pos=(x - size/2, y - size/2), size=(size, size))
-        
-        Color(0, 0, 0, 1)
-        self.draw_number(x, y, self.current_value)
-    
-    def draw_d12(self, x, y, size):
-        """Draw a d12 (dodecahedron)"""
-        Color(0.6, 0.2, 0.9, 1)  # Purple
-        # Draw as circle with more complex pattern
-        Ellipse(pos=(x - size/2, y - size/2), size=(size, size))
-        
-        Color(1, 1, 1, 1)
-        self.draw_number(x, y, self.current_value)
-    
-    def draw_d100(self, x, y, size):
-        """Draw a d100 (percentile)"""
-        Color(0.9, 0.9, 0.2, 1)  # Yellow
-        # Draw as two d10s side by side
-        quarter_size = size / 4
-        Ellipse(pos=(x - size/2, y - quarter_size), size=(size/2, size/2))
-        Ellipse(pos=(x, y - quarter_size), size=(size/2, size/2))
-        
-        Color(0, 0, 0, 1)
-        self.draw_number(x, y, self.current_value)
-    
-    def draw_generic_dice(self, x, y, size):
-        """Draw a generic dice"""
-        Color(0.7, 0.7, 0.7, 1)  # Gray
-        Ellipse(pos=(x - size/2, y - size/2), size=(size, size))
-        
-        Color(0, 0, 0, 1)
-        self.draw_number(x, y, self.current_value)
-    
-    def draw_number(self, x, y, number):
-        """Draw the number on the dice (placeholder - in real app would use Label)"""
-        # This is a simplified number display
-        # In a real implementation, you'd overlay a Label widget
-        pass
-        
-    def start_roll(self, duration=2.0):
-        """Start the dice rolling animation"""
+                with self.dice_image.canvas.after:
+                    from kivy.graphics import PopMatrix
+                    PopMatrix()
+    def start_roll(self, duration=2.0, pause_before=0.5):
+        """Start the dice rolling animation with optional pause before starting"""
+        print(f"🎲 Starting dice animation for d{self.dice_type} (duration: {duration}s, pause: {pause_before}s)")
         self.rolling = True
         self.current_value = 1
+        
+        # Schedule the actual animation to start after the pause
+        Clock.schedule_once(lambda dt: self._begin_animation(duration), pause_before)
+        
+    def _begin_animation(self, duration):
+        """Begin the actual rolling animation after the pause"""
+        print("⏱️ Pause finished, starting animation...")
         
         # Schedule value changes to simulate rolling
         self.animation_event = Clock.schedule_interval(self.update_value, 0.1)
@@ -167,13 +103,17 @@ class DiceAnimation(Widget):
         Clock.schedule_once(lambda dt: self.stop_roll(), duration)
         
         # Add visual animation (rotation and scaling)
+        print("🎬 Starting rotation animation...")
         rotation_anim = Animation(rotation=720, duration=duration)  # Two full rotations
         rotation_anim.start(self)
         
+        print("📏 Starting scale animation...")
         scale_anim = (Animation(scale=1.3, duration=duration/3) + 
                       Animation(scale=0.8, duration=duration/3) + 
                       Animation(scale=1.0, duration=duration/3))
         scale_anim.start(self)
+        
+        print("✅ Animation started!")
     
     def update_value(self, dt):
         """Update the displayed value during rolling"""
@@ -296,6 +236,9 @@ class RollScreen(Screen):
                     # Add the dice to container
                     container.add_widget(self.dice_animation)
                     
+                    # Force update of dice image position immediately
+                    self.dice_animation.update_image_pos()
+                    
                     # Create text label positioned below dice (bigger)
                     self.current_value_label = Label(
                         text=str(self.dice_animation.current_value),
@@ -309,14 +252,14 @@ class RollScreen(Screen):
                     )
                     container.add_widget(self.current_value_label)
                     
-                    # Start the animation
+                    # Start the animation AFTER positioning is complete
                     self.dice_animation.start_roll(duration=2.0)
                     
                     # Schedule periodic updates of the text
                     self.update_event = Clock.schedule_interval(self.update_dice_text, 0.15)
                     
-                    # Schedule the result display
-                    Clock.schedule_once(lambda dt: self.show_result(), 2.3)
+                    # Schedule the result display (add pause duration to timing)
+                    Clock.schedule_once(lambda dt: self.show_result(), 2.8)  # 2.0 + 0.5 pause + 0.3 buffer
             
             # Wait for layout to be complete, then setup animation
             Clock.schedule_once(setup_animation, 0.1)
@@ -532,8 +475,6 @@ class RollManager:
 
     def show_ability_dialog(self, roll_type):
         """Show ability selection dialog"""
-        from components.dialogs import ComprehensiveAbilityDialog
-        
         def on_dialog_dismiss(instance):
             if instance.selected_option:
                 self.current_ability = instance.selected_option
@@ -542,49 +483,39 @@ class RollManager:
                 elif roll_type == "ability_check":
                     self.roll_ability_check(instance.selected_option)
         
-        dialog = ComprehensiveAbilityDialog(profile_data=self.app.current_profile)
+        if roll_type == "saving_throw":
+            # Use simple dialog for saving throws (just the 6 abilities)
+            from components.dialogs import AbilityDialog
+            dialog = AbilityDialog()
+        elif roll_type == "ability_check":
+            # Use comprehensive dialog for ability checks (abilities + skills)
+            from components.dialogs import ComprehensiveAbilityDialog
+            dialog = ComprehensiveAbilityDialog(profile_data=self.app.current_profile)
+        
         dialog.bind(on_dismiss=on_dialog_dismiss)
         dialog.open()
 
     def show_weapon_dialog(self):
         """Show weapon selection dialog"""
-        print("\n" + "="*40)
-        print("⚔️  WEAPON SELECTION DEBUG")
-        print("="*40)
-
         if not self.app.current_profile:
-            print("❌ ERROR: No current profile found!")
             return None
-
-        profile = self.app.current_profile
-        print(f"📋 Profile: {profile.get('name', 'Unknown')}")
-
+        
         weapons = self.app.current_profile.get('weapons', [])
-        print(f"🔍 Found {len(weapons)} weapons in profile:")
-
-        for i, weapon in enumerate(weapons):
-            print(f"   {i}: {weapon.get('name', 'Unnamed')} (Ability: {weapon.get('ability', 'STR')}, Proficient: {weapon.get('proficient', False)})")
-
         if not weapons:
-            print("❌ ERROR: No weapons found in profile!")
-            print("💡 Please create weapons in the profile editor first")
-            return None
-
-        print("✅ Opening weapon selection dialog...")
-        print("="*40 + "\n")
-
+            # No weapons available, just roll a basic attack
+            return self.roll_attack(0)
+        
         from components.dialogs import WeaponDialog
-
+        
         def on_dialog_dismiss(instance):
             if instance.selected_option is not None:
                 weapon_index = weapons.index(next(w for w in weapons if w.get('name') == instance.selected_option))
-                print(f"🎯 Selected weapon index: {weapon_index}")
                 self.roll_attack(weapon_index)
-
+        
         dialog = WeaponDialog(weapons)
         dialog.bind(on_dismiss=on_dialog_dismiss)
         dialog.open()
-    
+
     def show_custom_dice_dialog(self):
         """Show custom dice selection dialog"""
         from components.dialogs import DiceDialog
@@ -627,34 +558,14 @@ class RollManager:
 
     def roll_attack(self, weapon_index=0):
         """Roll an attack with the selected weapon"""
-        print("\n" + "="*50)
-        print("🎲 WEAPON ATTACK CALCULATION DEBUG")
-        print("="*50)
-
         if not self.app.current_profile:
-            print("❌ ERROR: No current profile found!")
             return None
-
+        
         profile = self.app.current_profile
-        print(f"📋 Profile Name: {profile.get('name', 'Unknown')}")
-        print(f"📊 Profile Level: {profile.get('level', 1)}")
-
-        # Print all ability scores
-        abilities = profile.get('abilities', {})
-        print("🏋️  Ability Scores:")
-        for ability, score in abilities.items():
-            modifier = (score - 10) // 2
-            print(f"   {ability}: {score} (modifier: {modifier:+d})")
-
         weapons = profile.get('weapons', [])
-        print(f"⚔️  Weapons in Profile: {len(weapons)}")
-
-        for i, weapon in enumerate(weapons):
-            print(f"   Weapon {i}: {weapon}")
-
-        # Only create sample weapons if this is a fresh profile with no weapons ever created
+        
+        # Create sample weapons if none exist
         if not weapons:
-            print("⚠️  No weapons found, creating default weapons")
             weapons = [
                 {
                     'name': 'Longsword',
@@ -675,35 +586,19 @@ class RollManager:
             ]
             # Update profile with default weapons
             profile['weapons'] = weapons
-
+        
         if weapon_index >= len(weapons):
-            print(f"❌ ERROR: Weapon index {weapon_index} out of range (max: {len(weapons)-1})")
             weapon_index = 0
-
+            
         weapon = weapons[weapon_index]
-        print(f"\n🎯 Selected Weapon Details:")
-        print(f"   Name: {weapon.get('name', 'Unknown')}")
-        print(f"   Ability: {weapon.get('ability', 'STR')}")
-        print(f"   Proficient: {weapon.get('proficient', False)}")
-        print(f"   Damage Dice: {weapon.get('damage_dice', 'd6')}")
-        print(f"   Damage Bonus: {weapon.get('damage_bonus', 0)}")
-
         ability = weapon.get('ability', 'STR')
         proficient = weapon.get('proficient', False)
-
+        
         # Calculate modifiers
-        ability_score = profile['abilities'].get(ability, 10)
-        ability_mod = calculate_modifier(ability_score)
+        ability_mod = calculate_modifier(profile['abilities'].get(ability, 10))
         prof_bonus = calculate_proficiency_bonus(profile['level']) if proficient else 0
         modifier = ability_mod + prof_bonus
-
-        print(f"\n🧮 Modifier Calculation:")
-        print(f"   Ability Score ({ability}): {ability_score}")
-        print(f"   Ability Modifier: {ability_mod}")
-        print(f"   Proficiency Bonus: {prof_bonus} ({'proficient' if proficient else 'not proficient'})")
-        print(f"   Total Modifier: {modifier}")
-        print("="*50 + "\n")
-
+        
         # Set up the roll screen
         roll_screen = self.app.screen_manager.get_screen('roll')
         roll_screen.setup_roll(
@@ -713,7 +608,7 @@ class RollManager:
             description=f"Attack with {weapon.get('name', 'Weapon')}",
             weapon_data=weapon
         )
-
+        
         self.app.screen_manager.current = 'roll'
         return modifier
     
