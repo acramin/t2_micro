@@ -43,12 +43,13 @@ class DiceAnimation(Widget):
         self.update_image_pos()
     def update_dice_image(self, *args):
         """Update the dice image based on dice type"""
-        image_path = f"assets/images/d{self.dice_type}.png"
+        # Get the directory where the main app.py is located (project root)
+        script_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        image_path = os.path.join(script_dir, "assets", "images", f"d{self.dice_type}.png")
         
-        # Get absolute path for better Pi compatibility
-        abs_image_path = os.path.abspath(image_path)
+        print(f"🔍 Looking for dice image at: {image_path}")
         
-        if os.path.exists(abs_image_path):
+        if os.path.exists(image_path):
             # Try to force image reload for Pi compatibility
             self.dice_image.source = ""  # Clear first
             
@@ -58,9 +59,9 @@ class DiceAnimation(Widget):
             self.dice_image.keep_ratio = True
             
             # Set the source using absolute path
-            self.dice_image.source = abs_image_path
+            self.dice_image.source = image_path
             
-            print(f"📸 Loading dice image: {abs_image_path}")
+            print(f"📸 Loading dice image: {image_path}")
             
             # Force texture reload for Pi
             try:
@@ -72,7 +73,7 @@ class DiceAnimation(Widget):
             Clock.schedule_once(lambda dt: self.verify_image_load(), 0.2)
         else:
             # Fallback to a default image or keep current
-            print(f"⚠️ Warning: Dice image not found: {abs_image_path}")
+            print(f"⚠️ Warning: Dice image not found: {image_path}")
             Clock.schedule_once(lambda dt: self.create_fallback_shape(), 0.1)
             
     def verify_image_load(self):
