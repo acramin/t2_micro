@@ -44,12 +44,97 @@ class DiceAnimation(Widget):
     def update_dice_image(self, *args):
         """Update the dice image based on dice type"""
         image_path = f"assets/images/d{self.dice_type}.png"
-        if os.path.exists(image_path):
-            self.dice_image.source = image_path
-            print(f"📸 Loaded dice image: {image_path}")
+        
+        # Get absolute path for better Pi compatibility
+        abs_image_path = os.path.abspath(image_path)
+        
+        if os.path.exists(abs_image_path):
+            # Try to force image reload for Pi compatibility
+            self.dice_image.source = ""  # Clear first
+            
+            # Force image properties for Pi BEFORE setting source
+            self.dice_image.color = (1, 1, 1, 1)  # Ensure full opacity
+            self.dice_image.allow_stretch = True
+            self.dice_image.keep_ratio = True
+            
+            # Set the source using absolute path
+            self.dice_image.source = abs_image_path
+            
+            print(f"📸 Loading dice image: {abs_image_path}")
+            
+            # Force texture reload for Pi
+            try:
+                self.dice_image.reload()
+            except AttributeError:
+                pass  # reload() might not exist in all Kivy versions
+            
+            # Check if image actually loaded on Pi
+            Clock.schedule_once(lambda dt: self.verify_image_load(), 0.2)
         else:
             # Fallback to a default image or keep current
-            print(f"⚠️ Warning: Dice image not found: {image_path}")
+            print(f"⚠️ Warning: Dice image not found: {abs_image_path}")
+            Clock.schedule_once(lambda dt: self.create_fallback_shape(), 0.1)
+            
+    def verify_image_load(self):
+        """Verify that the image loaded properly (Pi debugging)"""
+        if hasattr(self, 'dice_image') and self.dice_image.texture:
+            print(f"✅ Image texture loaded: {self.dice_image.texture.width}x{self.dice_image.texture.height}")
+            # Hide fallback shape if image loaded
+            if hasattr(self, 'fallback_shape'):
+                self.fallback_shape.opacity = 0
+        else:
+            print("❌ Image texture failed to load - trying fallback")
+            self.create_fallback_shape()
+            
+    def create_fallback_shape(self):
+        """Create a fallback colored shape with dice number if image fails"""
+        if not hasattr(self, 'fallback_shape'):
+            from kivy.uix.label import Label
+            from kivy.graphics import Color, Ellipse, Rectangle
+            
+            # Create a colored background shape
+            self.fallback_shape = Widget(size=(120, 120))
+            
+            # Color based on dice type
+            dice_colors = {
+                4: (1, 0.5, 0.5, 1),    # Light red
+                6: (0.5, 1, 0.5, 1),    # Light green  
+                8: (0.5, 0.5, 1, 1),    # Light blue
+                10: (1, 1, 0.5, 1),     # Light yellow
+                12: (1, 0.5, 1, 1),     # Light magenta
+                20: (0.5, 1, 1, 1),     # Light cyan
+                100: (1, 0.8, 0.5, 1)   # Light orange
+            }
+            
+            color = dice_colors.get(self.dice_type, (0.8, 0.8, 0.8, 1))
+            
+            with self.fallback_shape.canvas:
+                Color(*color)
+                # Create circle for most dice, square for d6
+                if self.dice_type == 6:
+                    Rectangle(pos=(0, 0), size=(120, 120))
+                else:
+                    Ellipse(pos=(0, 0), size=(120, 120))
+            
+            # Add dice type label
+            dice_label = Label(
+                text=f"D{self.dice_type}",
+                font_size='20sp',
+                color=(0, 0, 0, 1),  # Black text
+                size=(120, 120),
+                text_size=(120, 120),
+                halign='center',
+                valign='middle'
+            )
+            
+            self.fallback_shape.add_widget(dice_label)
+            self.add_widget(self.fallback_shape)
+            
+        # Position the fallback shape
+        self.fallback_shape.center_x = self.center_x
+        self.fallback_shape.center_y = self.center_y
+        self.fallback_shape.opacity = 1
+        print(f"🎲 Created fallback shape for D{self.dice_type}")
     
     def update_image_pos(self, *args):
         """Update the image position when widget moves/resizes"""
@@ -81,6 +166,31 @@ class DiceAnimation(Widget):
                     Rotate(angle=self.rotation, origin=(self.dice_image.center_x, self.dice_image.center_y))
                 
                 with self.dice_image.canvas.after:
+                    from kivy.graphics import PopMatrix
+                    PopMatrix()
+        
+        # Also apply transforms to fallback shape if it exists
+        if hasattr(self, 'fallback_shape') and self.fallback_shape.opacity > 0:
+            # Calculate scaled size for fallback
+            base_size = 120
+            new_size = base_size * self.scale
+            self.fallback_shape.size = (new_size, new_size)
+            
+            # Re-center fallback shape
+            self.fallback_shape.center_x = self.center_x
+            self.fallback_shape.center_y = self.center_y
+            
+            # Apply rotation to fallback shape
+            if self.rotation != 0:
+                self.fallback_shape.canvas.before.clear()
+                self.fallback_shape.canvas.after.clear()
+                
+                with self.fallback_shape.canvas.before:
+                    from kivy.graphics import PushMatrix, Rotate
+                    PushMatrix()
+                    Rotate(angle=self.rotation, origin=(self.fallback_shape.center_x, self.fallback_shape.center_y))
+                
+                with self.fallback_shape.canvas.after:
                     from kivy.graphics import PopMatrix
                     PopMatrix()
     def start_roll(self, duration=2.0, pause_before=0.5):

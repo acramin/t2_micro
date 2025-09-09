@@ -14,9 +14,30 @@ import os
 # Disable multitouch emulation (red circles on right-click)
 Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
 
-# Set window size to 800x480
-Config.set('graphics', 'width', '800')
-Config.set('graphics', 'height', '480')
+# Pi-specific image provider configuration
+import platform
+if 'arm' in platform.machine().lower() or 'raspberry' in platform.node().lower():
+    print("🥧 Raspberry Pi detected - configuring image providers")
+    # Force specific image provider for Pi compatibility
+    from kivy.core.image import Image as CoreImage
+    try:
+        # Try to use PIL provider for better PNG support on Pi
+        Config.set('image', 'providers', 'img_pil,img_tex,img_dds,img_sdl2')
+        print("✅ PIL image provider prioritized for Pi")
+    except:
+        print("⚠️ PIL not available, using default providers")
+else:
+    print("💻 Desktop system detected")
+
+
+# # Set window size to 800x480
+# Config.set('graphics', 'width', '800')
+# Config.set('graphics', 'height', '480')
+
+# Enable fullscreen mode
+Config.set('graphics', 'fullscreen', '1')
+Config.set('graphics', 'width', '0')  # Use screen width
+Config.set('graphics', 'height', '0')  # Use screen height
 Config.set('graphics', 'resizable', False)
 
 # Import screens
@@ -144,6 +165,19 @@ class DnDDiceRollerApp(App):
         """Actions to perform when app starts"""
         # Set background color - Black
         Window.clearcolor = (0.0, 0.0, 0.0, 1)  # #000000
+        
+        # Programmatically set fullscreen mode
+        try:
+            Window.fullscreen = 'auto'  # Use 'auto' for best compatibility
+            print("Fullscreen mode activated")
+        except Exception as e:
+            print(f"Could not set fullscreen mode: {e}")
+            # Fallback: maximize window if fullscreen fails
+            try:
+                Window.maximize()
+                print("Window maximized as fallback")
+            except:
+                pass
         
     def on_stop(self):
         """Actions to perform when app closes"""
