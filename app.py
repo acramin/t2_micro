@@ -14,6 +14,11 @@ import os
 # Disable multitouch emulation (red circles on right-click)
 Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
 
+# Set window size to 800x480
+Config.set('graphics', 'width', '800')
+Config.set('graphics', 'height', '480')
+Config.set('graphics', 'resizable', False)
+
 # Import screens
 from screens.main_screen import MainScreen
 from screens.profile_screen import ProfileScreen
@@ -24,6 +29,9 @@ from screens.roll_screen import RollScreen, RollManager
 
 # Import custom components (needed for KV files)
 from components.buttons import PrimaryButton, DiceButton
+
+# Set window size explicitly after imports
+Window.size = (800, 480)
 
 # Load KV language files from the kv directory
 kv_path = os.path.join(os.path.dirname(__file__), 'kv')

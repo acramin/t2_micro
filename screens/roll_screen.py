@@ -45,8 +45,8 @@ class DiceAnimation(Widget):
             # Apply rotation
             Rotate(angle=self.rotation, origin=(center_x, center_y))
             
-            # Scale
-            size = min(self.width, self.height) * self.scale * 0.8
+            # Scale - made smaller (was 0.8)
+            size = min(self.width, self.height) * self.scale * 0.6
             
             # Draw dice based on type
             if self.dice_type == 4:
