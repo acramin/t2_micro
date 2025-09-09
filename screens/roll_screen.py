@@ -393,20 +393,20 @@ class RollScreen(Screen):
         self.show_attack_result = True
         
         # Add simple message prompting user to decide
-        if self.ids.get('attack_result_container'):
-            container = self.ids.attack_result_container
-            if not container.children:  # Only add if empty
+        # if self.ids.get('attack_result_container'):
+        #     container = self.ids.attack_result_container
+        #     if not container.children:  # Only add if empty
                 
-                # Prompt user to decide hit or miss
-                prompt_label = Label(
-                    text="Did the attack hit or miss?",
-                    color=(0.925, 0.941, 0.945, 1),  # Light color
-                    font_size=18,
-                    bold=True,
-                    halign="center",
-                    valign="middle"
-                )
-                container.add_widget(prompt_label)
+        #         # Prompt user to decide hit or miss
+        #         prompt_label = Label(
+        #             text="Did the attack hit or miss?",
+        #             color=(0.925, 0.941, 0.945, 1),  # Light color
+        #             font_size=18,
+        #             bold=True,
+        #             halign="center",
+        #             valign="middle"
+        #         )
+        #         container.add_widget(prompt_label)
     
     def confirm_hit(self):
         """User confirms the attack hit - proceed to damage roll"""
