@@ -13,7 +13,9 @@
         "STR",
         "CHA"
     ],
-    "skill_proficiencies": [],
+    "skill_proficiencies": [
+        "Acrobatics"
+    ],
     "weapons": [
         {
             "name": "GUN",

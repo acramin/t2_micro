@@ -137,10 +137,16 @@ class ProfileEditorScreen(Screen):
         
         # Skill proficiencies
         skills = self.profile_data.get('skill_proficiencies', [])
+        print(f"📖 Loading skill proficiencies from profile: {skills}")
         for skill in self.get_skill_list():
             skill_id = skill.lower().replace(' ', '_')
-            if self.ids.get(f'skill_{skill_id}'):
-                self.ids[f'skill_{skill_id}'].active = skill in skills
+            widget_id = f'skill_{skill_id}'
+            if self.ids.get(widget_id):
+                is_in_profile = skill in skills
+                self.ids[widget_id].ids.checkbox.active = is_in_profile
+                print(f"   {skill}: Widget found (ID: {widget_id}), Set checkbox active: {is_in_profile}")
+            else:
+                print(f"   {skill}: Widget NOT found (ID: {widget_id})")
         
         # Weapons
         if self.ids.get('weapons_container'):
@@ -218,10 +224,19 @@ class ProfileEditorScreen(Screen):
         
         # Skill proficiencies
         self.profile_data['skill_proficiencies'] = []
+        print("🔍 Checking skill proficiencies:")
         for skill in self.get_skill_list():
             skill_id = skill.lower().replace(' ', '_')
-            if self.ids[f'skill_{skill_id}'].active:
-                self.profile_data['skill_proficiencies'].append(skill)
+            widget_id = f'skill_{skill_id}'
+            if self.ids.get(widget_id):
+                is_active = self.ids[widget_id].ids.checkbox.active
+                print(f"   {skill}: Widget found (ID: {widget_id}), Checkbox active: {is_active}")
+                if is_active:
+                    self.profile_data['skill_proficiencies'].append(skill)
+                    print(f"     ✅ Added {skill} to proficiencies")
+            else:
+                print(f"   {skill}: Widget NOT found (ID: {widget_id})")
+        print(f"📋 Final skill proficiencies: {self.profile_data['skill_proficiencies']}")
         
         # Weapons
         self.profile_data['weapons'] = []

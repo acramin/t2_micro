@@ -749,6 +749,12 @@ class RollManager:
         
         profile = self.app.current_profile
         
+        print("\n" + "="*50)
+        print("🎯 ABILITY/SKILL CHECK DEBUG")
+        print("="*50)
+        print(f"📋 Profile: {profile.get('name', 'Unknown')}")
+        print(f"🎲 Rolling: {ability_or_skill}")
+        
         # Define skill-to-ability mapping
         skill_abilities = {
             "Acrobatics": "DEX",
@@ -776,12 +782,20 @@ class RollManager:
             # It's a skill
             ability = skill_abilities[ability_or_skill]
             skill_proficiencies = profile.get('skill_proficiencies', [])
+            print(f"🔍 Skill Proficiencies in Profile: {skill_proficiencies}")
             is_proficient = ability_or_skill in skill_proficiencies
+            print(f"✅ Is proficient in {ability_or_skill}? {is_proficient}")
             
             # Calculate modifiers
-            ability_mod = calculate_modifier(profile['abilities'].get(ability, 10))
+            ability_score = profile['abilities'].get(ability, 10)
+            ability_mod = calculate_modifier(ability_score)
             prof_bonus = calculate_proficiency_bonus(profile['level']) if is_proficient else 0
             modifier = ability_mod + prof_bonus
+            
+            print(f"🧮 Modifier Calculation for {ability_or_skill}:")
+            print(f"   Base Ability ({ability}): {ability_score} (modifier: {ability_mod:+d})")
+            print(f"   Proficiency Bonus: {prof_bonus} (Level {profile['level']})")
+            print(f"   Total Modifier: {modifier:+d}")
             
             description = f"{ability_or_skill} ({ability}) Check"
             if is_proficient:
@@ -790,7 +804,10 @@ class RollManager:
             # It's a basic ability check
             ability_mod = calculate_modifier(profile['abilities'].get(ability_or_skill, 10))
             modifier = ability_mod
+            print(f"🧮 Basic Ability Check: {ability_or_skill} modifier = {modifier:+d}")
             description = f"{ability_or_skill} Check"
+        
+        print("="*50 + "\n")
         
         # Set up the roll screen
         roll_screen = self.app.screen_manager.get_screen('roll')
