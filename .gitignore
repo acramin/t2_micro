@@ -145,3 +145,6 @@ Thumbs.db
 # Virtual environment
 venv/
 env/
+DnD_Dice_Roller.desktop
+dnd-dice-roller.service
+run_dice_roller.sh
