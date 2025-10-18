@@ -22,7 +22,7 @@ class MotionSensorWatcher:
     def __init__(
         self,
         pin: int = 17,
-    settle_time: float = 20.0,
+        settle_time: float = 6.0,
         poll_interval: float = 0.1,
     ) -> None:
         self.pin = pin
@@ -86,7 +86,9 @@ class MotionSensorWatcher:
     def _monitor_loop(self) -> None:
         try:
             if self._on_status:
-                self._on_status("Stabilizing sensor...")
+                self._on_status(
+                    f"Stabilizing sensor (~{int(self.settle_time)}s)..."
+                )
 
             GPIO.setwarnings(False)
             GPIO.setmode(GPIO.BCM)
