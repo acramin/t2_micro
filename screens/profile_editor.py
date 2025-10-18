@@ -115,9 +115,7 @@ class ProfileEditorScreen(Screen):
         
         # Ability scores
         abilities = self.profile_data.get('abilities', {})
-        print("📖 Loading ability scores:")
         for ability, value in abilities.items():
-            print(f"   {ability}: {value}")
             ability_id = f'ability_{ability.lower()}'
             if self.ids.get(ability_id):
                 ability_input = self.ids[ability_id]
@@ -125,9 +123,6 @@ class ProfileEditorScreen(Screen):
                 # Also update the text input display
                 if hasattr(ability_input, 'ids') and 'ability_value_input' in ability_input.ids:
                     ability_input.ids.ability_value_input.text = str(value)
-                print(f"   ✅ Set {ability} to {value}")
-            else:
-                print(f"   ❌ Widget {ability_id} not found!")
         
         # Saving throw proficiencies
         saving_throws = self.profile_data.get('saving_throw_proficiencies', [])
@@ -137,16 +132,12 @@ class ProfileEditorScreen(Screen):
         
         # Skill proficiencies
         skills = self.profile_data.get('skill_proficiencies', [])
-        print(f"📖 Loading skill proficiencies from profile: {skills}")
         for skill in self.get_skill_list():
             skill_id = skill.lower().replace(' ', '_')
             widget_id = f'skill_{skill_id}'
             if self.ids.get(widget_id):
                 is_in_profile = skill in skills
                 self.ids[widget_id].ids.checkbox.active = is_in_profile
-                print(f"   {skill}: Widget found (ID: {widget_id}), Set checkbox active: {is_in_profile}")
-            else:
-                print(f"   {skill}: Widget NOT found (ID: {widget_id})")
         
         # Weapons
         if self.ids.get('weapons_container'):
@@ -204,7 +195,6 @@ class ProfileEditorScreen(Screen):
             self.profile_data['level'] = 1
         
         # Ability scores
-        print("💾 Saving ability scores:")
         for ability in ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA']:
             ability_id = f'ability_{ability.lower()}'
             if self.ids.get(ability_id):
@@ -212,9 +202,6 @@ class ProfileEditorScreen(Screen):
                 old_value = self.profile_data['abilities'].get(ability, 10)
                 new_value = validate_ability_score(ability_input.ability_value)
                 self.profile_data['abilities'][ability] = new_value
-                print(f"   {ability}: {old_value} → {new_value}")
-            else:
-                print(f"   {ability}: Widget not found!")
         
         # Saving throw proficiencies
         self.profile_data['saving_throw_proficiencies'] = []
@@ -224,19 +211,13 @@ class ProfileEditorScreen(Screen):
         
         # Skill proficiencies
         self.profile_data['skill_proficiencies'] = []
-        print("🔍 Checking skill proficiencies:")
         for skill in self.get_skill_list():
             skill_id = skill.lower().replace(' ', '_')
             widget_id = f'skill_{skill_id}'
             if self.ids.get(widget_id):
                 is_active = self.ids[widget_id].ids.checkbox.active
-                print(f"   {skill}: Widget found (ID: {widget_id}), Checkbox active: {is_active}")
                 if is_active:
                     self.profile_data['skill_proficiencies'].append(skill)
-                    print(f"     ✅ Added {skill} to proficiencies")
-            else:
-                print(f"   {skill}: Widget NOT found (ID: {widget_id})")
-        print(f"📋 Final skill proficiencies: {self.profile_data['skill_proficiencies']}")
         
         # Weapons
         self.profile_data['weapons'] = []

@@ -17,17 +17,13 @@ Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
 # Pi-specific image provider configuration
 import platform
 if 'arm' in platform.machine().lower() or 'raspberry' in platform.node().lower():
-    print("🥧 Raspberry Pi detected - configuring image providers")
     # Force specific image provider for Pi compatibility
     from kivy.core.image import Image as CoreImage
     try:
         # Try to use PIL provider for better PNG support on Pi
         Config.set('image', 'providers', 'img_pil,img_tex,img_dds,img_sdl2')
-        print("✅ PIL image provider prioritized for Pi")
     except:
-        print("⚠️ PIL not available, using default providers")
-else:
-    print("💻 Desktop system detected")
+        pass
 
 
 # # Set window size to 800x480
@@ -123,7 +119,6 @@ class DnDDiceRollerApp(App):
         """Toggle between English and Portuguese"""
         self.current_language = 'pt' if self.current_language == 'en' else 'en'
         self.title = self.get_text('title')
-        print(f"Language changed to: {'Portuguese' if self.current_language == 'pt' else 'English'}")
         
         # Update the language button text in the main screen
         main_screen = self.screen_manager.get_screen('main')
@@ -142,10 +137,8 @@ class DnDDiceRollerApp(App):
             # Load the first character as current profile
             first_character = character_files[0].replace('.json', '')
             self.current_profile = load_character_profile(first_character)
-            print(f"Loaded profile: {self.current_profile.get('name', 'Unknown')}")
         else:
             # No saved profiles, create a default one
-            print("No saved profiles found, creating default profile")
             self.current_profile = {
                 'name': 'Default Character',
                 'level': 1,
@@ -169,13 +162,10 @@ class DnDDiceRollerApp(App):
         # Programmatically set fullscreen mode
         try:
             Window.fullscreen = 'auto'  # Use 'auto' for best compatibility
-            print("Fullscreen mode activated")
         except Exception as e:
-            print(f"Could not set fullscreen mode: {e}")
             # Fallback: maximize window if fullscreen fails
             try:
                 Window.maximize()
-                print("Window maximized as fallback")
             except:
                 pass
         

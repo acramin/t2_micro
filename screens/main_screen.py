@@ -58,7 +58,6 @@ class MainScreen(Screen):
 
     def roll_dice(self, sides):
         """Roll a specific die"""
-        print(f"Rolling d{sides}")
         if self.app and self.app.roll_manager:
             self.app.roll_manager.roll_dice(sides)
 

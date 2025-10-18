@@ -47,8 +47,6 @@ class DiceAnimation(Widget):
         script_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         image_path = os.path.join(script_dir, "assets", "images", f"d{self.dice_type}.png")
         
-        print(f"🔍 Looking for dice image at: {image_path}")
-        
         if os.path.exists(image_path):
             # Try to force image reload for Pi compatibility
             self.dice_image.source = ""  # Clear first
@@ -61,8 +59,6 @@ class DiceAnimation(Widget):
             # Set the source using absolute path
             self.dice_image.source = image_path
             
-            print(f"📸 Loading dice image: {image_path}")
-            
             # Force texture reload for Pi
             try:
                 self.dice_image.reload()
@@ -73,18 +69,15 @@ class DiceAnimation(Widget):
             Clock.schedule_once(lambda dt: self.verify_image_load(), 0.2)
         else:
             # Fallback to a default image or keep current
-            print(f"⚠️ Warning: Dice image not found: {image_path}")
             Clock.schedule_once(lambda dt: self.create_fallback_shape(), 0.1)
             
     def verify_image_load(self):
         """Verify that the image loaded properly (Pi debugging)"""
         if hasattr(self, 'dice_image') and self.dice_image.texture:
-            print(f"✅ Image texture loaded: {self.dice_image.texture.width}x{self.dice_image.texture.height}")
             # Hide fallback shape if image loaded
             if hasattr(self, 'fallback_shape'):
                 self.fallback_shape.opacity = 0
         else:
-            print("❌ Image texture failed to load - trying fallback")
             self.create_fallback_shape()
             
     def create_fallback_shape(self):
@@ -135,7 +128,6 @@ class DiceAnimation(Widget):
         self.fallback_shape.center_x = self.center_x
         self.fallback_shape.center_y = self.center_y
         self.fallback_shape.opacity = 1
-        print(f"🎲 Created fallback shape for D{self.dice_type}")
     
     def update_image_pos(self, *args):
         """Update the image position when widget moves/resizes"""
@@ -196,7 +188,6 @@ class DiceAnimation(Widget):
                     PopMatrix()
     def start_roll(self, duration=2.0, pause_before=0.5):
         """Start the dice rolling animation with optional pause before starting"""
-        print(f"🎲 Starting dice animation for d{self.dice_type} (duration: {duration}s, pause: {pause_before}s)")
         self.rolling = True
         self.current_value = 1
         
@@ -205,8 +196,6 @@ class DiceAnimation(Widget):
         
     def _begin_animation(self, duration):
         """Begin the actual rolling animation after the pause"""
-        print("⏱️ Pause finished, starting animation...")
-        
         # Schedule value changes to simulate rolling
         self.animation_event = Clock.schedule_interval(self.update_value, 0.1)
         
@@ -214,17 +203,13 @@ class DiceAnimation(Widget):
         Clock.schedule_once(lambda dt: self.stop_roll(), duration)
         
         # Add visual animation (rotation and scaling)
-        print("🎬 Starting rotation animation...")
         rotation_anim = Animation(rotation=720, duration=duration)  # Two full rotations
         rotation_anim.start(self)
         
-        print("📏 Starting scale animation...")
         scale_anim = (Animation(scale=1.3, duration=duration/3) + 
                       Animation(scale=0.8, duration=duration/3) + 
                       Animation(scale=1.0, duration=duration/3))
         scale_anim.start(self)
-        
-        print("✅ Animation started!")
     
     def update_value(self, dt):
         """Update the displayed value during rolling"""
@@ -405,6 +390,11 @@ class RollScreen(Screen):
         
         self.result = roll_result
         self.total = roll_result + self.modifier
+        
+        # Print d20 rolls with character name and rolled value
+        if self.dice_type == 20:
+            character_name = self.app.current_profile.get('name', 'Unknown') if self.app and self.app.current_profile else 'Unknown'
+            print(f"{character_name} rolled {roll_result}")
         
         # Check for critical hits/fails
         if self.dice_type == 20 and self.roll_type in ["attack", "saving_throw", "ability_check"]:
@@ -755,12 +745,6 @@ class RollManager:
         
         profile = self.app.current_profile
         
-        print("\n" + "="*50)
-        print("🎯 ABILITY/SKILL CHECK DEBUG")
-        print("="*50)
-        print(f"📋 Profile: {profile.get('name', 'Unknown')}")
-        print(f"🎲 Rolling: {ability_or_skill}")
-        
         # Define skill-to-ability mapping
         skill_abilities = {
             "Acrobatics": "DEX",
@@ -788,20 +772,13 @@ class RollManager:
             # It's a skill
             ability = skill_abilities[ability_or_skill]
             skill_proficiencies = profile.get('skill_proficiencies', [])
-            print(f"🔍 Skill Proficiencies in Profile: {skill_proficiencies}")
             is_proficient = ability_or_skill in skill_proficiencies
-            print(f"✅ Is proficient in {ability_or_skill}? {is_proficient}")
             
             # Calculate modifiers
             ability_score = profile['abilities'].get(ability, 10)
             ability_mod = calculate_modifier(ability_score)
             prof_bonus = calculate_proficiency_bonus(profile['level']) if is_proficient else 0
             modifier = ability_mod + prof_bonus
-            
-            print(f"🧮 Modifier Calculation for {ability_or_skill}:")
-            print(f"   Base Ability ({ability}): {ability_score} (modifier: {ability_mod:+d})")
-            print(f"   Proficiency Bonus: {prof_bonus} (Level {profile['level']})")
-            print(f"   Total Modifier: {modifier:+d}")
             
             description = f"{ability_or_skill} ({ability}) Check"
             if is_proficient:
@@ -810,10 +787,7 @@ class RollManager:
             # It's a basic ability check
             ability_mod = calculate_modifier(profile['abilities'].get(ability_or_skill, 10))
             modifier = ability_mod
-            print(f"🧮 Basic Ability Check: {ability_or_skill} modifier = {modifier:+d}")
             description = f"{ability_or_skill} Check"
-        
-        print("="*50 + "\n")
         
         # Set up the roll screen
         roll_screen = self.app.screen_manager.get_screen('roll')
