@@ -394,7 +394,7 @@ class RollScreen(Screen):
         # Print d20 rolls with character name and rolled value
         if self.dice_type == 20:
             character_name = self.app.current_profile.get('name', 'Unknown') if self.app and self.app.current_profile else 'Unknown'
-            print(f"{character_name} rolled {roll_result}")
+            print(f"Roll: {character_name} rolled {roll_result}")
         
         # Check for critical hits/fails
         if self.dice_type == 20 and self.roll_type in ["attack", "saving_throw", "ability_check"]:
