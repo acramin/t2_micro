@@ -22,7 +22,7 @@ class MotionSensorWatcher:
     def __init__(
         self,
         pin: int = 17,
-        settle_time: float = 6.0,
+        settle_time: float = 60.0,
         poll_interval: float = 0.1,
     ) -> None:
         self.pin = pin
