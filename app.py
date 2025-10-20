@@ -14,6 +14,22 @@ import os
 # Disable multitouch emulation (red circles on right-click)
 Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
 
+# Enable virtual keyboard for touchscreens
+# This makes the on-screen keyboard appear when text inputs are focused
+# IMPORTANT: This must be set BEFORE any other Kivy imports that initialize the Window
+Config.set('kivy', 'keyboard_mode', 'systemanddock')
+# Alternative options:
+# 'system' - uses system keyboard only (default on mobile)
+# 'dock' - uses Kivy's virtual keyboard docked at bottom
+# 'systemanddock' - shows both (best for Pi touchscreen - shows keyboard when TextInput is focused)
+# '' or 'multi' - allows both modes
+
+# Configure keyboard layout and behavior
+Config.set('kivy', 'keyboard_layout', 'qwerty')  # Use standard QWERTY layout
+
+# Note: If the keyboard still doesn't appear on first run, it may be due to cached config.
+# To reset: Delete ~/.kivy/config.ini and restart the app
+
 # Pi-specific image provider configuration
 import platform
 if 'arm' in platform.machine().lower() or 'raspberry' in platform.node().lower():

@@ -25,6 +25,8 @@
         size_hint_x: 0.15
         input_filter: "int"
         multiline: False
+        write_tab: False
+        keyboard_mode: 'managed'
         on_text: root.update_value(self.text)
     
     Button:
@@ -79,6 +81,8 @@
             hint_text: "Weapon Name"
             size_hint_x: 0.4
             multiline: False
+            write_tab: False
+            keyboard_mode: 'managed'
             on_text: root.weapon_name = self.text
         
         Spinner:
@@ -99,6 +103,8 @@
             size_hint_x: 0.1
             input_filter: "int"
             multiline: False
+            write_tab: False
+            keyboard_mode: 'managed'
             on_text: 
                 try: root.weapon_damage_bonus = int(self.text) if self.text else 0
                 except: pass
@@ -172,6 +178,8 @@
                     text: ""
                     size_hint_x: 0.4
                     multiline: False
+                    write_tab: False
+                    keyboard_mode: 'managed'
                 
                 Label:
                     text: "Level:"
@@ -185,6 +193,8 @@
                     size_hint_x: 0.2
                     input_filter: "int"
                     multiline: False
+                    write_tab: False
+                    keyboard_mode: 'managed'
             
             # Ability Scores
             Label:
