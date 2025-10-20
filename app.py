@@ -10,22 +10,9 @@ import platform
 # Disable multitouch emulation (red circles on right-click)
 Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
 
-# Enable virtual keyboard for touchscreens
-# This makes the on-screen keyboard appear when text inputs are focused
+# Enable managed keyboard mode so we can provide our own on-screen keyboard
 # IMPORTANT: This must be set BEFORE any other Kivy imports that initialize the Window
-Config.set('kivy', 'keyboard_mode', 'dock')
-# Alternative options:
-# 'system' - uses system keyboard only (default on mobile)
-# 'dock' - uses Kivy's virtual keyboard docked at bottom (recommended for touchscreens)
-# 'systemanddock' - shows both (may require additional OS support)
-# '' or 'multi' - allows both modes
-
-# Configure keyboard layout and behavior
-Config.set('kivy', 'keyboard_layout', 'qwerty')  # Use standard QWERTY layout
-
-# Make keyboard larger and more persistent
-Config.set('kivy', 'keyboard_height', '240')  # Half of 480px screen height
-Config.set('kivy', 'keyboard_width', '800')   # Full screen width
+Config.set('kivy', 'keyboard_mode', 'managed')
 
 # Note: If the keyboard still doesn't appear on first run, it may be due to cached config.
 # To reset: Delete ~/.kivy/config.ini and restart the app
@@ -72,9 +59,7 @@ from components.text_inputs import PersistentKeyboardTextInput
 # Set window size explicitly after imports
 Window.size = (800, 480)
 Window.softinput_mode = 'below_target'
-Window.allow_vkeyboard = True
-Window.single_vkeyboard = True  # Use single keyboard instance (more stable)
-Window.docked_vkeyboard = True  # Keep keyboard docked
+Window.allow_vkeyboard = False  # Disable built-in virtual keyboard (custom keyboard handles input)
 
 # Load KV language files from the kv directory
 kv_path = os.path.join(os.path.dirname(__file__), 'kv')

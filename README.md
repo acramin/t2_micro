@@ -11,52 +11,36 @@ D&D Dice Roller Application for Raspberry Pi with Touchscreen
 
 ## Touchscreen Keyboard Configuration
 
-The app is configured to display a **large, persistent on-screen virtual keyboard** (half the screen height) when you tap on text input fields. The keyboard is set to `dock` mode and will stay visible once opened.
+The app ships with a **custom on-screen keyboard** that appears the moment a text field gains focus. It occupies the lower half of the display, supports letters, numbers, space, backspace, shift (case toggle), and quick hide/enter actions. Because this keyboard is implemented entirely in-app, it works consistently on Raspberry Pi touchscreens regardless of the underlying window manager.
 
 ### Keyboard Behavior
 
-- **Size**: The keyboard takes up half the screen (240px height on 480px screen)
-- **Persistence**: Once you tap a text field, the keyboard appears and **stays visible** until you explicitly dismiss it
-- **Single tap**: You only need to tap once on a text field to open the keyboard
-- **Navigation**: The keyboard stays open as you move between text fields
+- **Half-screen layout**: anchored to the bottom, leaving the upper half visible for the form
+- **Single-tap activation**: tapping any white text field focuses it and slides the keyboard in
+- **Shared keyboard**: stays visible as you hop between fields; tap above the keyboard to dismiss
+- **Shift toggle**: tap **SHIFT** to switch between lower- and upper-case characters
 
 ### Custom TextInput Implementation
 
-The app uses `PersistentKeyboardTextInput` widgets that ensure:
-1. Keyboard opens immediately on first tap
-2. Keyboard remains visible while editing
-3. Focus is properly maintained across fields
+Every text field uses `PersistentKeyboardTextInput`, which coordinates with the shared keyboard controller to:
+1. Trigger the keyboard on first tap
+2. Keep focus locked on the active field while pressing keys
+3. Close the keyboard only when you tap the **Hide** button or outside the keyboard area
 
 ### Troubleshooting Keyboard Issues
 
-If the keyboard doesn't appear when you tap on a text field:
+If the keyboard ever fails to appear:
 
-1. **Clear Kivy's cached config**: Delete the file `~/.kivy/config.ini` (on Raspberry Pi, this is typically `/home/pi/.kivy/config.ini`)
-   ```bash
-   rm ~/.kivy/config.ini
-   ```
+1. **Clear Kivy's cached config**: delete `~/.kivy/config.ini` (typically `/home/pi/.kivy/config.ini`)
+  ```bash
+  rm ~/.kivy/config.ini
+  ```
 
 2. **Restart the application** after deleting the config file
 
-3. **Alternative keyboard modes** (if you want to change it):
-   - Edit `app.py` and change the line:
-     ```python
-     Config.set('kivy', 'keyboard_mode', 'dock')
-     ```
-   - Options:
-     - `'dock'` - Kivy keyboard docked at bottom (current setting - persistent and large)
-     - `'systemanddock'` - Uses both Kivy and system keyboards (requires external desktop keyboard support)
-     - `'system'` - Uses system keyboard only
-     - `''` - Auto-detect based on platform
+3. **Confirm build includes new modules**: ensure `components/virtual_keyboard.py` and `components/text_inputs.py` are present on the device and imported in `app.py`
 
-4. **Adjust keyboard size** (optional):
-   - Edit `app.py` to change keyboard dimensions:
-     ```python
-     Config.set('kivy', 'keyboard_height', '240')  # Half screen
-     Config.set('kivy', 'keyboard_width', '800')   # Full width
-     ```
-
-4. **For debugging**: Check if the keyboard config is being loaded by looking at the console output when the app starts
+4. **Check console logs**: any exceptions logged during keyboard creation will be printed to stdout/stderr
 
 ## Motion Sensor Configuration
 
