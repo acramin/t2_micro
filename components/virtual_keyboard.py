@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from functools import partial
+from time import monotonic
 
 from kivy.clock import Clock
 from kivy.core.window import Window
@@ -38,6 +39,8 @@ class OnScreenKeyboard(FloatLayout):
         self.target = None  # Active TextInput
         self._shift_active = False
         self._letter_buttons: list[Button] = []
+        self._press_cooldown = 0.18
+        self._last_press_time = {}
 
         # Transparent area (top half) to catch taps and dismiss the keyboard
         self._dismiss_area = _DismissArea(controller, size_hint=(1, 0.5), pos_hint={"x": 0, "y": 0.5})
@@ -109,6 +112,7 @@ class OnScreenKeyboard(FloatLayout):
         self.disabled = True
         self.opacity = 0
         self.target = None
+        self._last_press_time.clear()
 
     # ------------------------------------------------------------------
     # Target management
@@ -137,6 +141,12 @@ class OnScreenKeyboard(FloatLayout):
     # Key handling
     # ------------------------------------------------------------------
     def _handle_key_press(self, key: str, button: Button) -> None:
+        now = monotonic()
+        last_time = self._last_press_time.get(button)
+        if last_time is not None and now - last_time < self._press_cooldown:
+            return
+        self._last_press_time[button] = now
+
         target = self.target
         if target is None and key not in {"Hide", "Enter"}:
             return
