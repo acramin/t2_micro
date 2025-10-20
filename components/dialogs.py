@@ -4,6 +4,7 @@ from kivy.uix.gridlayout import GridLayout
 from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.uix.modalview import ModalView
+from kivy.clock import Clock
 from components.buttons import PrimaryButton
 
 class SelectionDialog(ModalView):
@@ -16,6 +17,7 @@ class SelectionDialog(ModalView):
         self.selected_option = None
         self.size_hint = (0.8, 0.8)
         self.auto_dismiss = False
+        self._buttons_enabled = False  # Prevent immediate clicks
         self.setup_ui()
     
     def setup_ui(self):
@@ -40,7 +42,7 @@ class SelectionDialog(ModalView):
                 size_hint_y=None,
                 height=60
             )
-            btn.bind(on_press=lambda instance, opt=option: self.select_option(opt))
+            btn.bind(on_release=lambda instance, opt=option: self.select_option(opt))
             options_grid.add_widget(btn)
         layout.add_widget(options_grid)
         
@@ -51,13 +53,23 @@ class SelectionDialog(ModalView):
             height=50,
             background_color=(0.8, 0.2, 0.2, 1)
         )
-        cancel_btn.bind(on_press=self.dismiss)
+        cancel_btn.bind(on_release=self.dismiss)
         layout.add_widget(cancel_btn)
         
         self.add_widget(layout)
+        
+        # Enable buttons after a short delay to prevent touch-through
+        Clock.schedule_once(lambda dt: self._enable_buttons(), 0.3)
+    
+    def _enable_buttons(self):
+        """Enable button interactions after dialog is fully displayed"""
+        self._buttons_enabled = True
     
     def select_option(self, option):
         """Handle option selection"""
+        # Prevent immediate clicks from touch-through
+        if not self._buttons_enabled:
+            return
         self.selected_option = option
         self.dismiss()
 
@@ -78,6 +90,7 @@ class ComprehensiveAbilityDialog(ModalView):
         self.size_hint = (0.9, 0.9)
         self.auto_dismiss = False
         self.profile_data = profile_data or {}
+        self._buttons_enabled = False  # Prevent immediate clicks
         self.setup_ui()
     
     def setup_ui(self):
@@ -128,7 +141,7 @@ class ComprehensiveAbilityDialog(ModalView):
                 size_hint_y=None,
                 height=50
             )
-            btn.bind(on_press=lambda instance, opt=ability: self.select_option(opt))
+            btn.bind(on_release=lambda instance, opt=ability: self.select_option(opt))
             content_layout.add_widget(btn)
         
         # Skills section
@@ -182,7 +195,7 @@ class ComprehensiveAbilityDialog(ModalView):
                 height=45,
                 font_size=14
             )
-            btn.bind(on_press=lambda instance, opt=skill_name: self.select_option(opt))
+            btn.bind(on_release=lambda instance, opt=skill_name: self.select_option(opt))
             content_layout.add_widget(btn)
         
         scroll_view.add_widget(content_layout)
@@ -195,10 +208,13 @@ class ComprehensiveAbilityDialog(ModalView):
             height=50,
             background_color=(0.8, 0.2, 0.2, 1)
         )
-        cancel_btn.bind(on_press=self.dismiss)
+        cancel_btn.bind(on_release=self.dismiss)
         layout.add_widget(cancel_btn)
         
         self.add_widget(layout)
+        
+        # Enable buttons after a short delay to prevent touch-through
+        Clock.schedule_once(lambda dt: self._enable_buttons(), 0.3)
     
     def calculate_proficiency_bonus(self, level):
         """Calculate proficiency bonus based on level"""
@@ -213,8 +229,15 @@ class ComprehensiveAbilityDialog(ModalView):
         else:
             return 6
     
+    def _enable_buttons(self):
+        """Enable button interactions after dialog is fully displayed"""
+        self._buttons_enabled = True
+    
     def select_option(self, option):
         """Handle option selection"""
+        # Prevent immediate clicks from touch-through
+        if not self._buttons_enabled:
+            return
         self.selected_option = option
         self.dismiss()
 

@@ -38,21 +38,41 @@ class MainScreen(Screen):
     
     def initiate_attack_roll(self):
         """Initiate an attack roll"""
+        # Defer to allow touch event to complete before showing dialog
+        Clock.schedule_once(lambda dt: self._show_weapon_dialog(), 0.1)
+    
+    def _show_weapon_dialog(self):
+        """Internal method to show weapon dialog"""
         if self.app and self.app.roll_manager:
             self.app.roll_manager.show_weapon_dialog()
 
     def initiate_saving_throw(self):
         """Initiate a saving throw"""
+        # Defer to allow touch event to complete before showing dialog
+        Clock.schedule_once(lambda dt: self._show_saving_throw_dialog(), 0.1)
+    
+    def _show_saving_throw_dialog(self):
+        """Internal method to show saving throw dialog"""
         if self.app and self.app.roll_manager:
             self.app.roll_manager.show_ability_dialog("saving_throw")
 
     def initiate_ability_check(self):
         """Initiate an ability check"""
+        # Defer to allow touch event to complete before showing dialog
+        Clock.schedule_once(lambda dt: self._show_ability_check_dialog(), 0.1)
+    
+    def _show_ability_check_dialog(self):
+        """Internal method to show ability check dialog"""
         if self.app and self.app.roll_manager:
             self.app.roll_manager.show_ability_dialog("ability_check")
 
     def show_custom_dice_dialog(self):
         """Show custom dice dialog"""
+        # Defer to allow touch event to complete before showing dialog
+        Clock.schedule_once(lambda dt: self._show_custom_dialog(), 0.1)
+    
+    def _show_custom_dialog(self):
+        """Internal method to show custom dice dialog"""
         if self.app and self.app.roll_manager:
             self.app.roll_manager.show_custom_dice_dialog()
 
