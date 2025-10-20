@@ -105,11 +105,11 @@
                 text: "Roll Again"
                 size_hint_x: 0.5
                 height: 55
-                on_press: root.new_roll()
+                on_release: root.new_roll()
             
             PrimaryButton:
                 text: "New Roll"
                 size_hint_x: 0.5
                 height: 55
                 bg_color: [0.863, 0.078, 0.235, 1]  # Crimson red color
-                on_press: root.back_to_main()
+                on_release: root.back_to_main()

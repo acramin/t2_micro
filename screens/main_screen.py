@@ -102,7 +102,7 @@ class MainScreen(Screen):
 
         if started:
             self.motion_button_text = "Cancel Motion Wait"
-            self.motion_status = "Arming motion sensor (~6s)... press again to cancel"
+            self.motion_status = "Arming motion sensor (~30s)... press again to cancel"
 
     def _update_motion_status(self, message: str) -> None:
         self.motion_status = message

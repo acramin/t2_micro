@@ -493,6 +493,11 @@ class RollScreen(Screen):
     
     def roll_damage(self, instance):
         """Roll damage for an attack"""
+        # Use Clock.schedule_once to defer the action, preventing touchscreen crashes
+        Clock.schedule_once(lambda dt: self._perform_damage_roll(), 0.05)
+    
+    def _perform_damage_roll(self):
+        """Internal method to perform the damage roll after touch events are handled"""
         if not self.weapon_data:
             # Default damage if no weapon data
             damage_dice = "1d8"
@@ -538,11 +543,24 @@ class RollScreen(Screen):
             self.total = total_damage
             self.show_result()
     
-    def new_roll(self):
+    def new_roll(self, *args):
         """Start a new roll of the same type"""
+        # Use Clock.schedule_once to defer the action, allowing touch events to complete
+        # This prevents crashes on touchscreens where touch events might conflict with widget clearing
+        Clock.schedule_once(self._perform_new_roll, 0.05)
+    
+    def _perform_new_roll(self, dt):
+        """Internal method to perform the new roll after touch events are handled"""
         # Cancel any existing update events
         if hasattr(self, 'update_event'):
-            self.update_event.cancel()
+            try:
+                self.update_event.cancel()
+            except:
+                pass  # Ignore if already cancelled
+        
+        # Cancel any existing animations
+        if hasattr(self, 'dice_animation') and self.dice_animation:
+            Animation.cancel_all(self.dice_animation)
         
         # Reset critical states
         self.critical_hit = False
@@ -557,14 +575,41 @@ class RollScreen(Screen):
             self.ids.result_label.text = "Preparing roll..."
         
         # Clear containers only once
-        self.clear_all_containers()
+        try:
+            self.clear_all_containers()
+        except:
+            pass  # Ignore if containers already cleared
         
         # Restart the roll with a small delay
         Clock.schedule_once(lambda dt: self.start_roll(), 0.2)
     
-    def back_to_main(self):
+    def back_to_main(self, *args):
         """Return to the main screen"""
-        self.app.screen_manager.current = 'main'
+        # Use Clock.schedule_once to defer screen transition, preventing touchscreen crashes
+        Clock.schedule_once(self._perform_back_to_main, 0.05)
+    
+    def _perform_back_to_main(self, dt):
+        """Internal method to perform screen transition after touch events are handled"""
+        # Cancel any existing update events
+        if hasattr(self, 'update_event'):
+            try:
+                self.update_event.cancel()
+            except:
+                pass  # Ignore if already cancelled
+        
+        # Cancel any existing animations
+        if hasattr(self, 'dice_animation') and self.dice_animation:
+            Animation.cancel_all(self.dice_animation)
+        
+        # Clear containers before transitioning
+        try:
+            self.clear_all_containers()
+        except:
+            pass  # Ignore if already cleared
+        
+        # Transition to main screen
+        if self.app and self.app.screen_manager:
+            self.app.screen_manager.current = 'main'
 
 class RollManager:
     """Manager class for handling different types of rolls"""

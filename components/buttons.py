@@ -28,12 +28,18 @@ class PrimaryButton(Button):
         if not hasattr(self, 'padding'):
             self.padding = (16, 8)
 
+        # Track if button is currently being animated to prevent double-taps on touchscreens
+        self._is_animating = False
+
         # Bind press/release animations
         self.bind(on_press=self._on_press_animation)
         self.bind(on_release=self._on_release_animation)
 
     def _on_press_animation(self, instance):
         """Smooth press animation"""
+        if self._is_animating:
+            return  # Prevent multiple simultaneous animations
+        self._is_animating = True
         from kivy.animation import Animation
         anim = Animation(opacity=0.7, duration=0.1)
         anim.start(self)
@@ -42,7 +48,20 @@ class PrimaryButton(Button):
         """Smooth release animation"""
         from kivy.animation import Animation
         anim = Animation(opacity=1.0, duration=0.15)
+        anim.bind(on_complete=lambda *args: setattr(self, '_is_animating', False))
         anim.start(self)
+    
+    def on_touch_down(self, touch):
+        """Override to add debouncing for touchscreens"""
+        if self.collide_point(*touch.pos) and not self.disabled:
+            # Add a small delay to handle touchscreen debouncing
+            if hasattr(self, '_last_touch_time'):
+                from time import time
+                if time() - self._last_touch_time < 0.3:  # 300ms debounce
+                    return False
+            from time import time
+            self._last_touch_time = time()
+        return super().on_touch_down(touch)
 
 class DiceButton(Button):
     """Specialized button for dice selection with clean, modern styling"""
@@ -75,12 +94,18 @@ class DiceButton(Button):
         if not hasattr(self, 'font_size') or self.font_size == 15:  # Kivy's default
             self.font_size = 16
 
+        # Track if button is currently being animated to prevent double-taps on touchscreens
+        self._is_animating = False
+
         # Bind press/release animations
         self.bind(on_press=self._on_press_animation)
         self.bind(on_release=self._on_release_animation)
 
     def _on_press_animation(self, instance):
         """Smooth press animation"""
+        if self._is_animating:
+            return  # Prevent multiple simultaneous animations
+        self._is_animating = True
         from kivy.animation import Animation
         anim = Animation(opacity=0.7, duration=0.1)
         anim.start(self)
@@ -89,4 +114,17 @@ class DiceButton(Button):
         """Smooth release animation"""
         from kivy.animation import Animation
         anim = Animation(opacity=1.0, duration=0.15)
+        anim.bind(on_complete=lambda *args: setattr(self, '_is_animating', False))
         anim.start(self)
+    
+    def on_touch_down(self, touch):
+        """Override to add debouncing for touchscreens"""
+        if self.collide_point(*touch.pos) and not self.disabled:
+            # Add a small delay to handle touchscreen debouncing
+            if hasattr(self, '_last_touch_time'):
+                from time import time
+                if time() - self._last_touch_time < 0.3:  # 300ms debounce
+                    return False
+            from time import time
+            self._last_touch_time = time()
+        return super().on_touch_down(touch)
