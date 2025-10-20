@@ -23,6 +23,10 @@ Config.set('kivy', 'keyboard_mode', 'dock')
 # Configure keyboard layout and behavior
 Config.set('kivy', 'keyboard_layout', 'qwerty')  # Use standard QWERTY layout
 
+# Make keyboard larger and more persistent
+Config.set('kivy', 'keyboard_height', '240')  # Half of 480px screen height
+Config.set('kivy', 'keyboard_width', '800')   # Full screen width
+
 # Note: If the keyboard still doesn't appear on first run, it may be due to cached config.
 # To reset: Delete ~/.kivy/config.ini and restart the app
 
@@ -63,12 +67,14 @@ from screens.roll_screen import RollScreen, RollManager
 
 # Import custom components (needed for KV files)
 from components.buttons import PrimaryButton, DiceButton
+from components.text_inputs import PersistentKeyboardTextInput
 
 # Set window size explicitly after imports
 Window.size = (800, 480)
 Window.softinput_mode = 'below_target'
 Window.allow_vkeyboard = True
-Window.vkeyboard_mode = 'dock'
+Window.single_vkeyboard = True  # Use single keyboard instance (more stable)
+Window.docked_vkeyboard = True  # Keep keyboard docked
 
 # Load KV language files from the kv directory
 kv_path = os.path.join(os.path.dirname(__file__), 'kv')

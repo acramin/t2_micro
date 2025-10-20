@@ -19,7 +19,7 @@
         background_color: 0.863, 0.078, 0.235, 1  # Crimson red
         on_press: root.decrease_value()
     
-    TextInput:
+    PersistentKeyboardTextInput:
         id: ability_value_input
         text: str(root.ability_value)
         size_hint_x: 0.15
@@ -75,7 +75,7 @@
         height: 40
         spacing: 8
         
-        TextInput:
+        PersistentKeyboardTextInput:
             text: root.weapon_name
             hint_text: "Weapon Name"
             size_hint_x: 0.4
@@ -95,7 +95,7 @@
             size_hint_x: 0.2
             on_text: root.weapon_damage_dice = self.text
         
-        TextInput:
+        PersistentKeyboardTextInput:
             text: str(root.weapon_damage_bonus)
             hint_text: "Bonus"
             size_hint_x: 0.1
@@ -170,7 +170,7 @@
                     color: 0.925, 0.941, 0.945, 1  # Light gray text
                     bold: True
                 
-                TextInput:
+                PersistentKeyboardTextInput:
                     id: character_name
                     text: ""
                     size_hint_x: 0.4
@@ -183,7 +183,7 @@
                     color: 0.925, 0.941, 0.945, 1  # Light gray text
                     bold: True
                 
-                TextInput:
+                PersistentKeyboardTextInput:
                     id: character_level
                     text: "1"
                     size_hint_x: 0.2
