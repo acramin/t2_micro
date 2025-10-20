@@ -253,7 +253,6 @@ class DiceDialog(SelectionDialog):
     
     def __init__(self, **kwargs):
         dice_options = [
-            "d100", "2d4", "2d6", "2d8", "2d10", "3d4", "3d6", "3d8",
-            "4d4"
+            "2d4", "2d6", "2d8", "2d10", "3d4", "3d6"
         ]
         super().__init__("Select Dice", dice_options, **kwargs)
