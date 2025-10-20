@@ -123,9 +123,15 @@ class OnScreenKeyboard(FloatLayout):
         self._update_letter_case()
 
     def _ensure_focus(self) -> None:
-        if self.target is None:
+        target = self.target
+        if target is None:
             return
-        Clock.schedule_once(lambda dt: setattr(self.target, "focus", True), 0)
+
+        def restore_focus(_dt):
+            if self.target is target and target is not None:
+                target.focus = True
+
+        Clock.schedule_once(restore_focus, 0)
 
     # ------------------------------------------------------------------
     # Key handling
