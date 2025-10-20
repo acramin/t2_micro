@@ -9,7 +9,9 @@ class PersistentKeyboardTextInput(TextInput):
     """TextInput wired to the custom on-screen keyboard."""
 
     def on_focus(self, instance, value):  # noqa: D401 - Kivy signature
-        super().on_focus(instance, value)
+        parent_on_focus = getattr(super(PersistentKeyboardTextInput, self), "on_focus", None)
+        if parent_on_focus:
+            parent_on_focus(instance, value)
         if value:
             keyboard_controller.show(self)
         else:
