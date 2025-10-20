@@ -27,12 +27,12 @@ If the keyboard doesn't appear when you tap on a text field:
 3. **Alternative keyboard modes** (if you want to change it):
    - Edit `app.py` and change the line:
      ```python
-     Config.set('kivy', 'keyboard_mode', 'systemanddock')
+     Config.set('kivy', 'keyboard_mode', 'dock')
      ```
    - Options:
-     - `'systemanddock'` - Kivy's virtual keyboard (recommended for touchscreen)
+     - `'dock'` - Kivy keyboard docked at bottom (recommended for touchscreen)
+     - `'systemanddock'` - Uses both Kivy and system keyboards (requires external desktop keyboard support)
      - `'system'` - Uses system keyboard only
-     - `'dock'` - Kivy keyboard docked at bottom
      - `''` - Auto-detect based on platform
 
 4. **For debugging**: Check if the keyboard config is being loaded by looking at the console output when the app starts

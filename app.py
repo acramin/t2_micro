@@ -13,11 +13,11 @@ Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
 # Enable virtual keyboard for touchscreens
 # This makes the on-screen keyboard appear when text inputs are focused
 # IMPORTANT: This must be set BEFORE any other Kivy imports that initialize the Window
-Config.set('kivy', 'keyboard_mode', 'systemanddock')
+Config.set('kivy', 'keyboard_mode', 'dock')
 # Alternative options:
 # 'system' - uses system keyboard only (default on mobile)
-# 'dock' - uses Kivy's virtual keyboard docked at bottom
-# 'systemanddock' - shows both (best for Pi touchscreen - shows keyboard when TextInput is focused)
+# 'dock' - uses Kivy's virtual keyboard docked at bottom (recommended for touchscreens)
+# 'systemanddock' - shows both (may require additional OS support)
 # '' or 'multi' - allows both modes
 
 # Configure keyboard layout and behavior
@@ -68,6 +68,7 @@ from components.buttons import PrimaryButton, DiceButton
 Window.size = (800, 480)
 Window.softinput_mode = 'below_target'
 Window.allow_vkeyboard = True
+Window.vkeyboard_mode = 'dock'
 
 # Load KV language files from the kv directory
 kv_path = os.path.join(os.path.dirname(__file__), 'kv')
