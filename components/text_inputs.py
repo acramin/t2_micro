@@ -15,7 +15,7 @@ class PersistentKeyboardTextInput(TextInput):
         if value:
             keyboard_controller.show(self)
         else:
-            keyboard_controller.schedule_hide(self)
+            keyboard_controller.on_focus_lost(self)
 
     def insert_text(self, substring, from_undo=False):
         super().insert_text(substring, from_undo=from_undo)

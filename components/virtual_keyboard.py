@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from functools import partial
-from typing import Optional
 
 from kivy.clock import Clock
 from kivy.core.window import Window
@@ -133,7 +132,7 @@ class OnScreenKeyboard(FloatLayout):
     # ------------------------------------------------------------------
     def _handle_key_press(self, key: str, button: Button) -> None:
         target = self.target
-        if target is None:
+        if target is None and key not in {"Hide", "Enter"}:
             return
 
         if key == "Backspace":
@@ -142,15 +141,13 @@ class OnScreenKeyboard(FloatLayout):
             target.insert_text(" ")
         elif key == "Enter":
             # Confirm input and hide keyboard
-            target.focus = False
-            self._controller.hide_immediately()
+            self._controller.hide_immediately(target)
             return
         elif key == "Shift":
             self._toggle_shift()
             return
         elif key == "Hide":
-            target.focus = False
-            self._controller.hide_immediately()
+            self._controller.hide_immediately(target)
             return
         else:
             char = key.upper() if self._shift_active else key.lower() if key.isalpha() else key
@@ -173,12 +170,9 @@ class KeyboardController:
 
     def __init__(self):
         self._keyboard = OnScreenKeyboard(self)
-        self._hide_event = None
+        self._ignore_focus_loss: set = set()
 
     def show(self, text_input) -> None:
-        if self._hide_event:
-            self._hide_event.cancel()
-            self._hide_event = None
         self._keyboard.set_target(text_input)
         if self._keyboard.parent is None:
             self._keyboard.open()
@@ -186,23 +180,23 @@ class KeyboardController:
     def refocus(self) -> None:
         self._keyboard._ensure_focus()
 
-    def schedule_hide(self, text_input) -> None:
-        if self._keyboard.target is not text_input:
-            return
-        if self._hide_event:
-            self._hide_event.cancel()
-        self._hide_event = Clock.schedule_once(lambda dt: self._hide_if_still_target(text_input), 0.2)
-
-    def hide_immediately(self) -> None:
-        if self._hide_event:
-            self._hide_event.cancel()
-            self._hide_event = None
+    def hide_immediately(self, text_input=None) -> None:
+        if text_input is None:
+            text_input = self._keyboard.target
+        if text_input is not None:
+            self._ignore_focus_loss.add(text_input)
+            if text_input.focus:
+                text_input.focus = False
         self._keyboard.dismiss()
 
-    def _hide_if_still_target(self, text_input) -> None:
-        self._hide_event = None
-        if self._keyboard.target is text_input:
-            self._keyboard.dismiss()
+
+    def on_focus_lost(self, text_input) -> None:
+        if self._keyboard.target is not text_input:
+            return
+        if text_input in self._ignore_focus_loss:
+            self._ignore_focus_loss.remove(text_input)
+            return
+        self._keyboard._ensure_focus()
 
     @property
     def keyboard(self) -> OnScreenKeyboard:
