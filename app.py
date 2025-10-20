@@ -3,13 +3,9 @@
 Main application class for D&D Dice Roller
 """
 
-from kivy.app import App
-from kivy.uix.screenmanager import ScreenManager, FadeTransition
-from kivy.core.window import Window
-from kivy.properties import ObjectProperty, DictProperty
-from kivy.lang import Builder
 from kivy.config import Config
 import os
+import platform
 
 # Disable multitouch emulation (red circles on right-click)
 Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
@@ -31,7 +27,6 @@ Config.set('kivy', 'keyboard_layout', 'qwerty')  # Use standard QWERTY layout
 # To reset: Delete ~/.kivy/config.ini and restart the app
 
 # Pi-specific image provider configuration
-import platform
 if 'arm' in platform.machine().lower() or 'raspberry' in platform.node().lower():
     # Force specific image provider for Pi compatibility
     from kivy.core.image import Image as CoreImage
@@ -52,6 +47,12 @@ Config.set('graphics', 'width', '0')  # Use screen width
 Config.set('graphics', 'height', '0')  # Use screen height
 Config.set('graphics', 'resizable', False)
 
+from kivy.app import App
+from kivy.uix.screenmanager import ScreenManager, FadeTransition
+from kivy.core.window import Window
+from kivy.properties import ObjectProperty, DictProperty
+from kivy.lang import Builder
+
 # Import screens
 from screens.main_screen import MainScreen
 from screens.profile_screen import ProfileScreen
@@ -65,6 +66,8 @@ from components.buttons import PrimaryButton, DiceButton
 
 # Set window size explicitly after imports
 Window.size = (800, 480)
+Window.softinput_mode = 'below_target'
+Window.allow_vkeyboard = True
 
 # Load KV language files from the kv directory
 kv_path = os.path.join(os.path.dirname(__file__), 'kv')
