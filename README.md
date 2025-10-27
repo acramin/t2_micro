@@ -285,7 +285,7 @@ O dashboard Ubidots apresenta:
 
 ### 4. Fluxo Node-RED Completo
 
-![Node-red](assets/Node-red.png)
+![Nodered](assets/Node-red.jpg)
 
 ### 5. Configuração do Sistema
 
