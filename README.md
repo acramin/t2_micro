@@ -259,7 +259,7 @@ O projeto integra um sistema completo de monitoramento remoto utilizando **Node-
 ### Arquitetura do Dashboard
 
 ```
-[Raspberry Pi] → [stdout log] → [File System] → [Node-RED File Reader]
+     [Raspberry Pi] → [stdout log] → [Node-RED File Reader]
                                                         ↓
                                                    [Parser JSON]
                                                         ↓
@@ -270,98 +270,12 @@ O projeto integra um sistema completo de monitoramento remoto utilizando **Node-
                                             [Dashboard Web Ubidots]
 ```
 
-### 1. Captura de Dados
 
-Toda rolagem de d20 gera um log no formato:
-```
-Roll: Gandalf rolled 15
-```
-
-Este log é:
-1. **Impresso no stdout** pela aplicação Python
-2. **Redirecionado para arquivo** via script de execução
-3. **Monitorado pelo Node-RED** através do nó "file in"
-
-### 2. Processamento no Node-RED
-
-O fluxo Node-RED realiza:
-
-#### A. Leitura de Arquivo
-```javascript
-// Nó: file in
-// Path: /home/pi/dice_rolls.log
-// Output: cada nova linha do arquivo
-```
-
-#### B. Parsing de Dados
-```javascript
-// Nó: function (Parse Roll Data)
-var msg_text = msg.payload;
-var match = msg_text.match(/Roll: (.+) rolled (\d+)/);
-
-if (match) {
-    msg.payload = {
-        character: match[1],
-        roll_value: parseInt(match[2]),
-        timestamp: new Date().getTime()
-    };
-    return msg;
-}
-return null;
-```
-
-#### C. Publicação MQTT
-```javascript
-// Nó: mqtt out
-// Server: industrial.api.ubidots.com:1883
-// Topic: /v1.6/devices/dnd-dice-roller
-// Credentials: Token de API Ubidots
-
-{
-    "character": "Gandalf",
-    "roll_value": 15,
-    "timestamp": 1698364800000
-}
-```
-
-### 3. Visualização no Ubidots
+### 1. Visualização no Ubidots
 
 O dashboard Ubidots apresenta:
 
-#### Widgets Implementados
-
-| Widget | Tipo | Descrição |
-|--------|------|-----------|
-| **Último Personagem** | Indicator | Nome do último personagem que rolou |
-| **Valor da Rolagem** | Gauge | Valor do último d20 (1-20) |
-| **Histórico de Rolagens** | Line Chart | Gráfico temporal dos últimos 50 rolls |
-| **Distribuição** | Bar Chart | Frequência de cada valor (1-20) |
-| **Contador de Críticos** | Metric | Total de 20s naturais |
-| **Contador de Falhas** | Metric | Total de 1s naturais |
-| **Taxa de Sucesso** | Thermometer | % de rolagens ≥ 10 |
-
-#### Configuração de Variáveis Ubidots
-
-```json
-{
-  "variables": {
-    "character": {
-      "name": "Character Name",
-      "type": "string"
-    },
-    "roll_value": {
-      "name": "D20 Roll",
-      "type": "integer",
-      "min": 1,
-      "max": 20
-    },
-    "timestamp": {
-      "name": "Roll Time",
-      "type": "timestamp"
-    }
-  }
-}
-```
+IMAGENS
 
 ### 4. Fluxo Node-RED Completo
 
