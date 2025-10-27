@@ -3,6 +3,7 @@
 D&D Dice Roller é um sistema embarcado desenvolvido como projeto semestral da disciplina Microcontroladores e Sistemas Embarcados (EEN251) do Instituto Mauá de Tecnologia. Trata-se de um rolador de dados digital interativo para RPG de mesa (Dungeons & Dragons), capaz de realizar diversos tipos de rolagens com cálculo automático de modificadores, combinando interface touchscreen com sensor de movimento PIR para detecção de gestos.
 
 ## Sumário
+- [Demonstração](#demonstração)
 - [Requisitos](#requisitos)
 - [Escopo](#escopo)
 - [Diagrama de blocos](#diagrama-de-blocos)
@@ -13,6 +14,11 @@ D&D Dice Roller é um sistema embarcado desenvolvido como projeto semestral da d
 - [Dashboard e Monitoramento](#dashboard-e-monitoramento)
 - [Instalação](#instalação)
 - [Autores](#autores)
+
+## Demonstração
+
+VIDEO
+
 
 ## Requisitos
 | ID | Requisito | Tipo |
