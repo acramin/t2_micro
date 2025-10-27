@@ -75,12 +75,10 @@ graph TD
 - **Python 3.11**: Linguagem principal do projeto
 - **Kivy 2.1.0**: Framework para interface gráfica touchscreen
 - **RPi.GPIO**: Controle de GPIO para sensor PIR
-- **Threading**: Monitoramento assíncrono do sensor de movimento
 - **JSON**: Armazenamento persistente de dados de personagens
 - **Canvas Graphics**: Animações 2D de dados rotacionando
-- **Event-Driven Architecture**: Sistema de callbacks para interações
 - **Object-Oriented Design**: Estrutura modular com componentes reutilizáveis
-- **MQTT (Paho MQTT)**: Protocolo de comunicação IoT para transmissão de dados
+- **MQTT**: Protocolo de comunicação IoT para transmissão de dados
 - **Node-RED**: Plataforma de automação para processamento de fluxo de dados
 - **Ubidots**: Plataforma IoT para visualização de dados em tempo real
 - **File System Monitoring**: Leitura e processamento de logs de rolagem
@@ -367,19 +365,7 @@ O dashboard Ubidots apresenta:
 
 ### 4. Fluxo Node-RED Completo
 
-```
-[File Reader] → [Split Lines] → [Parse Regex] → [JSON Builder] → [MQTT Out]
-     ↓                                                                  ↓
-[Watch File]                                                    [Ubidots API]
-     ↓                                                                  ↓
-[Tail Mode]                                                      [Dashboard]
-```
-
-**Nodes utilizados:**
-- `node-red-node-tail`: Monitoramento contínuo de arquivo
-- `function`: Parsing de texto para JSON
-- `mqtt`: Publicação em broker Ubidots
-- `debug`: Logging de erros
+IMAGEM
 
 ### 5. Configuração do Sistema
 
@@ -416,34 +402,7 @@ npm install node-red-contrib-mqtt-broker
    - Username: `<UBIDOTS_TOKEN>`
    - Password: (deixar em branco)
 
-### 6. Exemplo de Fluxo Node-RED (JSON)
-
-```json
-[
-    {
-        "id": "file_reader",
-        "type": "tail",
-        "filename": "/home/pi/dice_rolls.log",
-        "split": true,
-        "name": "Watch Dice Rolls"
-    },
-    {
-        "id": "parser",
-        "type": "function",
-        "func": "var match = msg.payload.match(/Roll: (.+) rolled (\\d+)/);\nif (match) {\n    msg.payload = {\n        character: match[1],\n        roll_value: parseInt(match[2])\n    };\n    return msg;\n}\nreturn null;",
-        "name": "Parse Roll"
-    },
-    {
-        "id": "mqtt_pub",
-        "type": "mqtt out",
-        "broker": "ubidots_broker",
-        "topic": "/v1.6/devices/dnd-dice-roller",
-        "name": "Publish to Ubidots"
-    }
-]
-```
-
-### 7. Monitoramento em Tempo Real
+### 6. Monitoramento em Tempo Real
 
 O sistema permite:
 
@@ -453,20 +412,6 @@ O sistema permite:
 ✅ **Histórico completo** armazenado na nuvem  
 ✅ **Alertas personalizados** via Ubidots Events  
 ✅ **Acesso multiplataforma** (Web, iOS, Android)
-
-### 8. Troubleshooting Dashboard
-
-**Problema**: Dados não aparecem no Ubidots  
-**Solução**: 
-1. Verificar logs Node-RED em `http://raspberry-pi:1880`
-2. Confirmar token Ubidots válido
-3. Testar conexão MQTT: `mosquitto_pub -h industrial.api.ubidots.com -t test -m "hello"`
-
-**Problema**: Node-RED não lê arquivo  
-**Solução**:
-1. Verificar permissões: `chmod 644 /home/pi/dice_rolls.log`
-2. Confirmar path absoluto no nó `tail`
-3. Reiniciar Node-RED: `sudo systemctl restart nodered`
 
 ## Instalação
 
@@ -527,8 +472,6 @@ t2_micro/
 └── DnD_Dice_Roller.desktop    # Atalho para desktop
 ```
 
-
-**Status**: ✅ Aprovado
 
 ## Autores
 - Amanda Carolina Ambrizzi Ramin (22.00721-0)
