@@ -281,11 +281,11 @@ O projeto integra um sistema completo de monitoramento remoto utilizando **Node-
 
 O dashboard Ubidots apresenta:
 
-![Dashboard](ubidots.png)
+![Dashboard](assets/ubidots.png)
 
 ### 4. Fluxo Node-RED Completo
 
-![Node-red](Node-red.png)
+![Node-red](assets/Node-red.png)
 
 ### 5. Configuração do Sistema
 
