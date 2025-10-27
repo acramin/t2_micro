@@ -10,6 +10,7 @@ D&D Dice Roller é um sistema embarcado desenvolvido como projeto semestral da d
 - [Materiais](#materiais)
 - [Modelagem financeira](#modelagem-financeira)
 - [Funcionamento](#funcionamento)
+- [Dashboard e Monitoramento](#dashboard-e-monitoramento)
 - [Instalação](#instalação)
 - [Testes](#testes)
 - [Autores](#autores)
@@ -27,6 +28,8 @@ D&D Dice Roller é um sistema embarcado desenvolvido como projeto semestral da d
 | 8  | Sistema de rolagem por movimento (gesture-based rolling) | Técnico |
 | 9  | Armazenamento persistente de perfis de personagens | Funcional |
 | 10 | Interface gráfica adaptada para tela 800x480 | Técnico |
+| 11 | Dashboard web para monitoramento remoto de rolagens | Funcional |
+| 12 | Comunicação MQTT para transmissão de dados em tempo real | Técnico |
 
 ## Escopo
 O projeto consiste em um rolador de dados digital para D&D 5ª Edição que oferece:
@@ -40,6 +43,7 @@ O projeto consiste em um rolador de dados digital para D&D 5ª Edição que ofer
 3. **Rolagem por Movimento**: Sensor PIR detecta movimento do jogador para disparar rolagens de d20
 4. **Interface Touchscreen**: Sistema completo de teclado virtual e navegação por toque
 5. **Animações Visuais**: Dados 3D rotacionando durante as rolagens
+6. **Dashboard Web Interativo**: Monitoramento remoto via Node-RED e Ubidots com comunicação MQTT
 
 ## Diagrama de blocos
 ```mermaid
@@ -47,20 +51,28 @@ graph TD
     A[Raspberry Pi 3] --> B[Display Touchscreen 800x480]
     A --> C[Sensor PIR GPIO 17]
     A --> D[Sistema de Arquivos]
-    B --> E[Interface Kivy]
-    E --> F[Tela Principal]
-    E --> G[Editor de Perfis]
-    E --> H[Tela de Rolagem]
-    E --> I[Seleção de Personagens]
-    C --> J[Watcher de Movimento]
-    J --> K[Rolagem Automática d20]
-    D --> L[Perfis JSON]
-    L --> M[Atributos]
-    L --> N[Armas]
-    L --> O[Proficiências]
-    F --> P[Rolagens Básicas]
-    F --> Q[Rolagens Especiais]
-    F --> R[Modo Movimento]
+    A --> E[MQTT Publisher]
+    B --> F[Interface Kivy]
+    F --> G[Tela Principal]
+    F --> H[Editor de Perfis]
+    F --> I[Tela de Rolagem]
+    F --> J[Seleção de Personagens]
+    C --> K[Watcher de Movimento]
+    K --> L[Rolagem Automática d20]
+    D --> M[Perfis JSON]
+    M --> N[Atributos]
+    M --> O[Armas]
+    M --> P[Proficiências]
+    G --> Q[Rolagens Básicas]
+    G --> R[Rolagens Especiais]
+    G --> S[Modo Movimento]
+    E --> T[Broker MQTT]
+    T --> U[Node-RED]
+    U --> V[File Reader]
+    U --> W[MQTT Nodes]
+    W --> X[Ubidots]
+    X --> Y[Dashboard Web]
+    Y --> Z[Gráficos e Widgets]
 ```
 
 ## Tecnologias
@@ -72,6 +84,10 @@ graph TD
 - **Canvas Graphics**: Animações 2D de dados rotacionando
 - **Event-Driven Architecture**: Sistema de callbacks para interações
 - **Object-Oriented Design**: Estrutura modular com componentes reutilizáveis
+- **MQTT (Paho MQTT)**: Protocolo de comunicação IoT para transmissão de dados
+- **Node-RED**: Plataforma de automação para processamento de fluxo de dados
+- **Ubidots**: Plataforma IoT para visualização de dados em tempo real
+- **File System Monitoring**: Leitura e processamento de logs de rolagem
 
 ## Materiais
 | Componente | Quantidade |
@@ -242,6 +258,220 @@ class DiceAnimation:
         # 6. Exibição do resultado final
 ```
 
+## Dashboard e Monitoramento
+
+O projeto integra um sistema completo de monitoramento remoto utilizando **Node-RED** e **Ubidots** para visualização em tempo real das rolagens de dados realizadas no Raspberry Pi.
+
+### Arquitetura do Dashboard
+
+```
+[Raspberry Pi] → [stdout log] → [File System] → [Node-RED File Reader]
+                                                        ↓
+                                                   [Parser JSON]
+                                                        ↓
+                                            [MQTT Publisher (Node-RED)]
+                                                        ↓
+                                                [Broker MQTT Ubidots]
+                                                        ↓
+                                            [Dashboard Web Ubidots]
+```
+
+### 1. Captura de Dados
+
+Toda rolagem de d20 gera um log no formato:
+```
+Roll: Gandalf rolled 15
+```
+
+Este log é:
+1. **Impresso no stdout** pela aplicação Python
+2. **Redirecionado para arquivo** via script de execução
+3. **Monitorado pelo Node-RED** através do nó "file in"
+
+### 2. Processamento no Node-RED
+
+O fluxo Node-RED realiza:
+
+#### A. Leitura de Arquivo
+```javascript
+// Nó: file in
+// Path: /home/pi/dice_rolls.log
+// Output: cada nova linha do arquivo
+```
+
+#### B. Parsing de Dados
+```javascript
+// Nó: function (Parse Roll Data)
+var msg_text = msg.payload;
+var match = msg_text.match(/Roll: (.+) rolled (\d+)/);
+
+if (match) {
+    msg.payload = {
+        character: match[1],
+        roll_value: parseInt(match[2]),
+        timestamp: new Date().getTime()
+    };
+    return msg;
+}
+return null;
+```
+
+#### C. Publicação MQTT
+```javascript
+// Nó: mqtt out
+// Server: industrial.api.ubidots.com:1883
+// Topic: /v1.6/devices/dnd-dice-roller
+// Credentials: Token de API Ubidots
+
+{
+    "character": "Gandalf",
+    "roll_value": 15,
+    "timestamp": 1698364800000
+}
+```
+
+### 3. Visualização no Ubidots
+
+O dashboard Ubidots apresenta:
+
+#### Widgets Implementados
+
+| Widget | Tipo | Descrição |
+|--------|------|-----------|
+| **Último Personagem** | Indicator | Nome do último personagem que rolou |
+| **Valor da Rolagem** | Gauge | Valor do último d20 (1-20) |
+| **Histórico de Rolagens** | Line Chart | Gráfico temporal dos últimos 50 rolls |
+| **Distribuição** | Bar Chart | Frequência de cada valor (1-20) |
+| **Contador de Críticos** | Metric | Total de 20s naturais |
+| **Contador de Falhas** | Metric | Total de 1s naturais |
+| **Taxa de Sucesso** | Thermometer | % de rolagens ≥ 10 |
+
+#### Configuração de Variáveis Ubidots
+
+```json
+{
+  "variables": {
+    "character": {
+      "name": "Character Name",
+      "type": "string"
+    },
+    "roll_value": {
+      "name": "D20 Roll",
+      "type": "integer",
+      "min": 1,
+      "max": 20
+    },
+    "timestamp": {
+      "name": "Roll Time",
+      "type": "timestamp"
+    }
+  }
+}
+```
+
+### 4. Fluxo Node-RED Completo
+
+```
+[File Reader] → [Split Lines] → [Parse Regex] → [JSON Builder] → [MQTT Out]
+     ↓                                                                  ↓
+[Watch File]                                                    [Ubidots API]
+     ↓                                                                  ↓
+[Tail Mode]                                                      [Dashboard]
+```
+
+**Nodes utilizados:**
+- `node-red-node-tail`: Monitoramento contínuo de arquivo
+- `function`: Parsing de texto para JSON
+- `mqtt`: Publicação em broker Ubidots
+- `debug`: Logging de erros
+
+### 5. Configuração do Sistema
+
+#### A. Redirecionamento de Log (Raspberry Pi)
+```bash
+# run_dice_roller.sh
+#!/bin/bash
+cd /home/pi/Documentos/t2_micro
+source .venv/bin/activate
+python3 app.py 2>&1 | tee -a /home/pi/dice_rolls.log
+```
+
+#### B. Instalação Node-RED
+```bash
+# No Raspberry Pi
+bash <(curl -sL https://raw.githubusercontent.com/node-red/linux-installers/master/deb/update-nodejs-and-nodered)
+sudo systemctl enable nodered.service
+sudo systemctl start nodered
+
+# Instalar nodes adicionais
+cd ~/.node-red
+npm install node-red-node-tail
+npm install node-red-contrib-mqtt-broker
+```
+
+#### C. Configuração Ubidots
+1. Criar conta em [ubidots.com](https://ubidots.com)
+2. Criar device "dnd-dice-roller"
+3. Configurar variáveis: `character`, `roll_value`
+4. Obter **API Token** em: Account → API Credentials
+5. Configurar MQTT:
+   - Broker: `industrial.api.ubidots.com`
+   - Port: `1883`
+   - Username: `<UBIDOTS_TOKEN>`
+   - Password: (deixar em branco)
+
+### 6. Exemplo de Fluxo Node-RED (JSON)
+
+```json
+[
+    {
+        "id": "file_reader",
+        "type": "tail",
+        "filename": "/home/pi/dice_rolls.log",
+        "split": true,
+        "name": "Watch Dice Rolls"
+    },
+    {
+        "id": "parser",
+        "type": "function",
+        "func": "var match = msg.payload.match(/Roll: (.+) rolled (\\d+)/);\nif (match) {\n    msg.payload = {\n        character: match[1],\n        roll_value: parseInt(match[2])\n    };\n    return msg;\n}\nreturn null;",
+        "name": "Parse Roll"
+    },
+    {
+        "id": "mqtt_pub",
+        "type": "mqtt out",
+        "broker": "ubidots_broker",
+        "topic": "/v1.6/devices/dnd-dice-roller",
+        "name": "Publish to Ubidots"
+    }
+]
+```
+
+### 7. Monitoramento em Tempo Real
+
+O sistema permite:
+
+✅ **Visualização remota** de todas as rolagens  
+✅ **Análise estatística** da distribuição de valores  
+✅ **Detecção de padrões** (ex: excesso de críticos suspeitos)  
+✅ **Histórico completo** armazenado na nuvem  
+✅ **Alertas personalizados** via Ubidots Events  
+✅ **Acesso multiplataforma** (Web, iOS, Android)
+
+### 8. Troubleshooting Dashboard
+
+**Problema**: Dados não aparecem no Ubidots  
+**Solução**: 
+1. Verificar logs Node-RED em `http://raspberry-pi:1880`
+2. Confirmar token Ubidots válido
+3. Testar conexão MQTT: `mosquitto_pub -h industrial.api.ubidots.com -t test -m "hello"`
+
+**Problema**: Node-RED não lê arquivo  
+**Solução**:
+1. Verificar permissões: `chmod 644 /home/pi/dice_rolls.log`
+2. Confirmar path absoluto no nó `tail`
+3. Reiniciar Node-RED: `sudo systemctl restart nodered`
+
 ## Instalação
 
 ### Requisitos
@@ -365,6 +595,20 @@ t2_micro/
 ### Teste 8: Carregamento de Imagens de Dados
 **Procedimento**: Rolar cada tipo de dado (d4, d6, d8, d10, d12, d20, d100)  
 **Resultado Esperado**: Imagens PNG corretas carregadas de `assets/images`  
+**Status**: ✅ Aprovado
+
+### Teste 9: Dashboard MQTT e Ubidots
+**Procedimento**:
+- Iniciar Node-RED e verificar fluxo ativo
+- Rolar d20 no aplicativo
+- Verificar dashboard Ubidots
+
+**Resultado Esperado**:
+- Log gerado em `/home/pi/dice_rolls.log`
+- Node-RED processa e publica via MQTT
+- Dashboard Ubidots atualiza com novo valor
+- Gráficos refletem a rolagem em tempo real
+
 **Status**: ✅ Aprovado
 
 ## Autores
