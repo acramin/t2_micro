@@ -12,7 +12,6 @@ D&D Dice Roller é um sistema embarcado desenvolvido como projeto semestral da d
 - [Funcionamento](#funcionamento)
 - [Dashboard e Monitoramento](#dashboard-e-monitoramento)
 - [Instalação](#instalação)
-- [Testes](#testes)
 - [Autores](#autores)
 
 ## Requisitos
@@ -531,83 +530,6 @@ t2_micro/
 └── DnD_Dice_Roller.desktop    # Atalho para desktop
 ```
 
-## Testes
-
-### Teste 1: Rolagem Básica de Dados
-**Procedimento**: Selecionar d20 na tela principal  
-**Resultado Esperado**: Animação de rotação + valor entre 1-20  
-**Status**: ✅ Aprovado
-
-### Teste 2: Cálculo de Modificadores de Ataque
-**Procedimento**: 
-- Criar personagem com STR 16 (+3)
-- Adicionar arma "Espada" (STR, proficiente)
-- Personagem nível 5 (bonus +3)
-- Rolar ataque
-
-**Resultado Esperado**: d20 + 6 (3+3)  
-**Status**: ✅ Aprovado
-
-### Teste 3: Proficiência em Perícias
-**Procedimento**:
-- Marcar proficiência em "Stealth"
-- Rolar Ability Check → Stealth
-
-**Resultado Esperado**: d20 + DEX modifier + proficiency bonus  
-**Status**: ✅ Aprovado
-
-### Teste 4: Sensor de Movimento
-**Procedimento**:
-- Pressionar "Motion Sensor Roll (d20)"
-- Aguardar 6s (estabilização)
-- Passar mão em frente ao sensor PIR
-
-**Resultado Esperado**: 
-- Status muda para "Waiting for motion"
-- Ao detectar movimento, rola d20 automaticamente
-- Console imprime: `Roll: {character} rolled {value}`
-
-**Status**: ✅ Aprovado
-
-### Teste 5: Persistência de Dados
-**Procedimento**:
-- Criar personagem "Teste" com STR 18
-- Fechar aplicação
-- Reabrir aplicação
-
-**Resultado Esperado**: Personagem "Teste" carregado com STR 18  
-**Status**: ✅ Aprovado
-
-### Teste 6: Interface Touchscreen
-**Procedimento**: Testar todos os botões e campos de texto  
-**Resultado Esperado**: 
-- Botões respondem ao toque
-- Teclado virtual aparece ao tocar em campos de texto
-- Navegação fluida entre telas
-
-**Status**: ✅ Aprovado
-
-### Teste 7: Fullscreen no Raspberry Pi
-**Procedimento**: Executar `python app.py` no Pi  
-**Resultado Esperado**: App abre em tela cheia (800x480)  
-**Status**: ✅ Aprovado
-
-### Teste 8: Carregamento de Imagens de Dados
-**Procedimento**: Rolar cada tipo de dado (d4, d6, d8, d10, d12, d20, d100)  
-**Resultado Esperado**: Imagens PNG corretas carregadas de `assets/images`  
-**Status**: ✅ Aprovado
-
-### Teste 9: Dashboard MQTT e Ubidots
-**Procedimento**:
-- Iniciar Node-RED e verificar fluxo ativo
-- Rolar d20 no aplicativo
-- Verificar dashboard Ubidots
-
-**Resultado Esperado**:
-- Log gerado em `/home/pi/dice_rolls.log`
-- Node-RED processa e publica via MQTT
-- Dashboard Ubidots atualiza com novo valor
-- Gráficos refletem a rolagem em tempo real
 
 **Status**: ✅ Aprovado
 
